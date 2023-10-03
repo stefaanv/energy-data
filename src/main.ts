@@ -1,8 +1,8 @@
 // import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
 import { NestFactory } from '@nestjs/core'
-import { InquirerService } from 'nest-commander'
 import { AppModule } from './app.module'
-import * as inquirer from 'inquirer'
+import { prompt, Question } from 'inquirer'
+import { commandRootQuestions } from './inquirer-questions/command-root'
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -12,11 +12,7 @@ async function bootstrap() {
   while (true) {
     await sleep(10)
     console.log()
-    const answer = await inquirer.prompt({
-      name: 'confirm',
-      type: 'confirm',
-      message: "Please confirm that you'd like to XXX",
-    })
+    const answer = await prompt(commandRootQuestions)
     console.log(answer)
   }
 }
