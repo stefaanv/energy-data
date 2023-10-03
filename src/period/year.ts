@@ -8,10 +8,10 @@ export class Year implements IPeriod {
   constructor(year: number)
   constructor(year: number | string) {
     if (isString(year)) {
-      if (!Year.isValid(year)) throw new Error(`${year} is not a valid year label`)
+      if (!Year.isValidLabel(year)) throw new Error(`${year} is not a valid year label`)
       this.year = parseInt(year)
     } else {
-      if (!Year.isValid(year)) throw new Error(`${year} is not a valid year`)
+      if (!Year.isValidNumeric(year)) throw new Error(`${year} is not a valid year`)
       this.year = year
     }
   }
@@ -27,12 +27,11 @@ export class Year implements IPeriod {
     return ('0000' + this.year.toString()).slice(-4)
   }
 
-  static isValid(arg1: string | number): boolean {
-    if (isString(arg1)) return /[0-9]{4}/.test(arg1)
-    return arg1 >= 0 && arg1 < 10000
+  static isValidLabel(label: string): boolean {
+    return /^[0-9]{1,4}$/.test(label.trim())
   }
 
-  static parse(label: string) {
-    return new Year(label)
+  static isValidNumeric(year: number, ..._args: number[]): boolean {
+    return year >= 0 && year < 10000
   }
 }
