@@ -48,20 +48,26 @@ export class ForciblyCharge {
   /**
    * @param currentSOC percentage (0-100) of
    */
-  calcPower(currentSOC: number) {
+  calcPower(currentSOC: number): number | undefined {
+    // Niets doen wanneer het target al overschreden is
     if (
-      (this.mode === 'charge' && currentSOC > Math.max(this.holdOffPercentage, this.target ?? 0)) ||
+      (this.mode === 'charge' &&
+        ((currentSOC > this.holdOffPercentage ?? 0) || (currentSOC > this.target ?? 0))) ||
       (this.mode === 'discharge' &&
-        currentSOC < Math.min(this.holdOffPercentage, this.target ?? 100))
+        ((currentSOC < this.holdOffPercentage ?? 100) || (currentSOC < this.target ?? 100)))
     )
-      this._power = 0
+      return undefined
 
     const sign = this.mode === 'charge' ? +1 : -1
-    if (this._target) {
-      const socDifference = this.target - currentSOC
-      const energy = socDifference * ForciblyCharge.config.capacity * 10
-      this._power = (sign * energy) / this.periodInHours
+    // Indien absoluut gedefinieerd, dan enkel teken toevoegen
+    if (this.power) {
+      return sign * this.power
     }
+
+    // Target gedefinieerd
+    const socDifference = this.target - currentSOC
+    const energy = socDifference * ForciblyCharge.config.capacity * 10
+    return energy / this.periodInHours
   }
 
   /** in % */

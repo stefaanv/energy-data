@@ -1,7 +1,5 @@
 import { BatteryConfig, ForciblyCharge } from './forcible-load'
 import { parse } from 'date-fns'
-import { tr } from 'date-fns/locale'
-import exp from 'constants'
 
 describe('forcibly charge tests - absolute power', () => {
   let fCharge: ForciblyCharge
@@ -57,20 +55,52 @@ describe('forcibly charge tests - absolute power', () => {
     })
   })
 
-  describe('Calculate power from target 1', () => {
+  describe('Calculate power from target', () => {
     it('80% to 100% in 1h => 2kW charge', () => {
       till = parse('11:30', 'HH:mm', new Date())
       fCharge = new ForciblyCharge('charge', 100, from, till, 'target')
-      fCharge.calcPower(80)
-      expect(fCharge.power).toBeCloseTo(2000)
+      expect(fCharge.calcPower(80)).toBeCloseTo(2000)
+    })
+    it('80% to 100% in 30min => 4kW charge', () => {
+      fCharge = new ForciblyCharge('charge', 100, from, till, 'target')
+      expect(fCharge.calcPower(80)).toBeCloseTo(4000)
+    })
+    it('80% to 100% in 30min => 4kW charge', () => {
+      fCharge = new ForciblyCharge('charge', 100, from, till, 'target')
+      expect(fCharge.calcPower(80)).toBeCloseTo(4000)
+    })
+    it('60% to 10% in 2h => 2,5kW discharge', () => {
+      till = parse('12:30', 'HH:mm', new Date())
+      fCharge = new ForciblyCharge('discharge', 10, from, till, 'target')
+      expect(fCharge.calcPower(60)).toBeCloseTo(-2500)
+    })
+    it('charge 60% to 50% = no charging', () => {
+      till = parse('12:30', 'HH:mm', new Date())
+      fCharge = new ForciblyCharge('charge', 50, from, till, 'target')
+      expect(fCharge.calcPower(60)).toBeUndefined()
+    })
+    it('discharge 10% to 80% = no charging', () => {
+      fCharge = new ForciblyCharge('discharge', 80, from, till, 'target')
+      expect(fCharge.calcPower(10)).toBeUndefined()
     })
   })
 
-  describe('Calculate power from target 2', () => {
-    it('80% to 100% in 30min => 4kW charge', () => {
-      fCharge = new ForciblyCharge('charge', 100, from, till, 'target')
-      fCharge.calcPower(80)
-      expect(fCharge.power).toBeCloseTo(4000)
+  describe('Holdoff', () => {
+    it('charge 80% to 100%, holdoff 70%', () => {
+      fCharge = new ForciblyCharge('charge', 100, from, till, 'target', 70)
+      expect(fCharge.calcPower(71)).toBeUndefined()
+    })
+    it('discharge 50% to 20%, holdoff 49%', () => {
+      fCharge = new ForciblyCharge('discharge', 70, from, till, 'target', 49)
+      expect(fCharge.calcPower(50)).toBeUndefined()
+    })
+    it('charge from 80% @1000W, holdoff 70%', () => {
+      fCharge = new ForciblyCharge('charge', 1000, from, till, 'absolute', 70)
+      expect(fCharge.calcPower(80)).toBeUndefined()
+    })
+    it('discharge from 50% @1000, holdoff 49%', () => {
+      fCharge = new ForciblyCharge('discharge', 1000, from, till, 'absolute', 51)
+      expect(fCharge.calcPower(50)).toBeUndefined()
     })
   })
 })
