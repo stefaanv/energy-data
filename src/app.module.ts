@@ -1,19 +1,21 @@
 import { ConfigModule } from '@itanium.be/nestjs-dynamic-config'
-import { ConsoleLogger, Module } from '@nestjs/common'
+import { Module } from '@nestjs/common'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { DrizzleModule } from './drizzle/drizzle.module'
+import { LoggerService } from './logger.service'
 
 @Module({
   imports: [
     DrizzleModule,
     ConfigModule.register({
       configFile: 'configuration/config.js',
-      logger: new ConsoleLogger(),
+      logger: new LoggerService(),
       debug: true,
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, LoggerService],
+  exports: [LoggerService],
 })
 export class AppModule {}
