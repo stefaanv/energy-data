@@ -1,6 +1,7 @@
 exports.default = () => ({
   activateCommandKeyWatcher: false,
-  controllerSchedule: '*/10 * * * * *',
+  batteryMonitorInterval: 10,
+  timeZone: 'Europe/Brussels',
   batteryConfig: {
     capacity: 10,
     maxChargePower: 5000,
@@ -36,11 +37,11 @@ exports.default = () => ({
       },
     },
   },
-  chargeList: [
+  taskList: [
     {
-      mode: 'charge',
-      from: '7/10/2023 10:20:30',
-      till: '7/10/2023 11:20:30',
+      mode: 'discharge',
+      from: '2023-10-06 21:00:30',
+      till: '2023-10-06 21:59:30',
       power: 2000,
     },
   ],

@@ -76,6 +76,13 @@ export class ForciblyCharge {
       : Math.max(power, -this._powerLimit)
   }
 
+  isWithinPeriod(time: Date) {
+    console.log(this._setting.from)
+    console.log(time)
+    console.log(this._setting.till)
+    return isBefore(this._setting.from, time) && isBefore(time, this._setting.till)
+  }
+
   get power() {
     return this._powerLimit
   }

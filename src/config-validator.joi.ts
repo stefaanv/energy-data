@@ -1,5 +1,4 @@
 import * as Joi from 'Joi'
-import { join } from 'path'
 
 const batteryConfigSchema = Joi.object({
   capacity: Joi.number().description('battery capacity in kWh'),
@@ -41,7 +40,9 @@ const chargeDischargeSchema = Joi.object({
 }).options({ presence: 'required' })
 
 export const configValidationSchema = Joi.object({
+  batteryMonitorInterval: Joi.number().description('in seconds'),
+  TimeZone: Joi.string().default('Europe/Brussels'),
   batteryConfig: batteryConfigSchema.required(),
   homeAssistant: homeAssistantSchema.required(),
-  chargeList: Joi.array().items(chargeDischargeSchema).required(),
+  taskList: Joi.array().items(chargeDischargeSchema).required(),
 })

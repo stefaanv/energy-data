@@ -5,6 +5,8 @@ import { AppService } from './app.service'
 import { configValidationSchema } from './config-validator.joi'
 import { DrizzleModule } from './drizzle/drizzle.module'
 import { LoggerService } from './logger.service'
+import { BatteryMonitorService } from './battery-monitor.service'
+import { ScheduleModule } from '@nestjs/schedule'
 
 @Module({
   imports: [
@@ -12,13 +14,14 @@ import { LoggerService } from './logger.service'
     ConfigModule.register({
       configFile: 'configuration/config.js',
       logger: new LoggerService(),
-      debug: true,
+      debug: false,
       validationSchema: configValidationSchema,
       validationOptions: { allowUnknown: true },
     }),
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
-  providers: [AppService, LoggerService],
+  providers: [AppService, LoggerService, BatteryMonitorService],
   exports: [LoggerService],
 })
 export class AppModule {}
