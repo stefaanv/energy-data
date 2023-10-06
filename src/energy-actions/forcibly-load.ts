@@ -12,26 +12,35 @@ export interface BatteryConfig {
 export type ChargeMode = 'charge' | 'discharge'
 export type PowerSettingType = 'absolute' | 'target'
 
+export interface ChargeSetting {
+  mode: ChargeMode
+  from: Date
+  till: Date
+  power: number
+  target?: number
+  holdOff?: Percentage
+}
+
 export class ForciblyCharge {
   static config: BatteryConfig
+  public readonly _power: number
+  public readonly _target?: number
+  private readonly _powerLimit: number
 
-  constructor(
-    public mode: ChargeMode,
-    public readonly from: Date,
-    public readonly till: Date,
-    public readonly maxPower: number,
-    public readonly target?: number,
-    public readonly holdOff?: Percentage,
-  ) {
-    if (maxPower < 0) throw new Error('powerSetting must be positive')
-    if (target && (target < 0 || target > 100))
-      throw new Error('powerSetting must be between 0 and 100%')
-    const isBef = isBefore(from, till)
-    if (!isBefore(from, till)) throw new Error('from must be before till')
+  constructor(private readonly _setting: ChargeSetting) {
+    const config = ForciblyCharge.config
+    this._target = !_setting.target
+      ? undefined
+      : Math.min(Math.max(_setting.target ?? 0, config.lowerSocLimit), config.upperSocLimit)
+    this._powerLimit = _setting.mode === 'charge' ? config.maxChargePower : config.maxDischargePower
+    this._power = Math.max(0, Math.min(_setting.power, this._powerLimit))
+
+    const isBef = isBefore(_setting.from, _setting.till)
+    if (!isBefore(_setting.from, _setting.till)) throw new Error('from must be before till')
   }
 
   get periodInMinutes() {
-    return differenceInMinutes(this.till, this.from)
+    return differenceInMinutes(this._setting.till, this._setting.from)
   }
   get periodInHours() {
     return this.periodInMinutes / 60.0
@@ -41,33 +50,36 @@ export class ForciblyCharge {
    * @param currentSOC percentage (0-100) of
    */
   calcPower(currentSOC: number): number | undefined {
+    const setting = this._setting
     // Target gedefinieerd
-    const target = Math.min(
-      Math.max(this.target ?? 0, ForciblyCharge.config.lowerSocLimit),
-      ForciblyCharge.config.upperSocLimit,
-    )
-
     // Niets doen wanneer het target al overschreden is
     if (
-      (this.mode === 'charge' && ((currentSOC > this.holdOff ?? 100) || currentSOC > target)) ||
-      (this.mode === 'discharge' && ((currentSOC < this.holdOff ?? 0) || currentSOC < target))
+      (setting.mode === 'charge' &&
+        ((currentSOC > setting.holdOff ?? 100) || currentSOC > this._target)) ||
+      (setting.mode === 'discharge' &&
+        ((currentSOC < setting.holdOff ?? 0) || currentSOC < this._target))
     )
       return undefined
 
-    const sign = this.mode === 'charge' ? +1 : -1
-    const powerLimit =
-      this.mode === 'charge'
-        ? ForciblyCharge.config.maxChargePower
-        : ForciblyCharge.config.maxDischargePower
+    const sign = setting.mode === 'charge' ? +1 : -1
 
     // Indien geen target dan laden met opgegeven max power
-    if (!this.target) {
-      return sign * Math.min(this.maxPower, powerLimit)
+    if (!this._target) {
+      return sign * Math.min(this._power, this._powerLimit)
     }
 
-    const socDifference = target - currentSOC
+    const socDifference = this._target - currentSOC
     const energy = socDifference * ForciblyCharge.config.capacity * 10
     const power = energy / this.periodInHours
-    return this.mode === 'charge' ? Math.min(power, powerLimit) : Math.max(power, -powerLimit)
+    return setting.mode === 'charge'
+      ? Math.min(power, this._powerLimit)
+      : Math.max(power, -this._powerLimit)
+  }
+
+  get power() {
+    return this._powerLimit
+  }
+  get target() {
+    return this._target
   }
 }

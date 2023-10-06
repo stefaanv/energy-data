@@ -1,4 +1,5 @@
-import Joi from 'Joi'
+import * as Joi from 'Joi'
+import { join } from 'path'
 
 const batteryConfigSchema = Joi.object({
   capacity: Joi.number().description('battery capacity in kWh'),
@@ -8,21 +9,39 @@ const batteryConfigSchema = Joi.object({
   upperSocLimit: Joi.number().description('Overcharge protection limit'),
 }).options({ presence: 'required' })
 
-const homeAssistantCommand = Joi.object({
-  url: Joi.string(),
-  postData: Joi.object(),
+const stopCommandSchema = Joi.object({
+  url: Joi.string().required(),
+})
+
+const homeAssistantCommand = stopCommandSchema.append({
+  postData: Joi.object().required(),
   powerKey: Joi.string().default('power'),
-  wattToPowerMultiplier: Joi.string().default(1),
+  wattToPowerMultiplier: Joi.number().default(1),
   durationKey: Joi.string().default('duration'),
-  minutesToDurationMultiplier: Joi.string().default(1),
-}).options({ presence: 'required' })
+  minutesToDurationMultiplier: Joi.number().default(1),
+})
 
 const homeAssistantSchema = Joi.object({
   baseUrl: Joi.string().uri(),
   servicesUrl: Joi.string(),
   commands: Joi.object({
     forciblyChargeCommand: homeAssistantCommand.required(),
-    forciblydischargeCommand: homeAssistantCommand.required(),
-    stopForciblyChargeDischarge: homeAssistantCommand.required(),
+    forciblyDischargeCommand: homeAssistantCommand.required(),
+    stopForciblyChargeDischarge: stopCommandSchema.required(),
   }),
+})
+
+const chargeDischargeSchema = Joi.object({
+  mode: Joi.string().valid('charge', 'discharge').required(),
+  from: Joi.date(),
+  till: Joi.date(),
+  power: Joi.number().positive(),
+  target: Joi.number().positive().min(0).max(100).optional(),
+  holdoff: Joi.number().positive().min(0).max(100).optional(),
 }).options({ presence: 'required' })
+
+export const configValidationSchema = Joi.object({
+  batteryConfig: batteryConfigSchema.required(),
+  homeAssistant: homeAssistantSchema.required(),
+  chargeList: Joi.array().items(chargeDischargeSchema).required(),
+})

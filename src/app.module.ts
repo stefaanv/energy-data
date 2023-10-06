@@ -2,6 +2,7 @@ import { ConfigModule } from '@itanium.be/nestjs-dynamic-config'
 import { Module } from '@nestjs/common'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
+import { configValidationSchema } from './config-validator.joi'
 import { DrizzleModule } from './drizzle/drizzle.module'
 import { LoggerService } from './logger.service'
 
@@ -12,6 +13,8 @@ import { LoggerService } from './logger.service'
       configFile: 'configuration/config.js',
       logger: new LoggerService(),
       debug: true,
+      validationSchema: configValidationSchema,
+      validationOptions: { allowUnknown: true },
     }),
   ],
   controllers: [AppController],

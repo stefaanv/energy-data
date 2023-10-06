@@ -16,29 +16,26 @@ async function bootstrap() {
 
   // get some configuration items
   const config = app.get(ConfigService)
-  const version = config.get('version')
 
-  // Activate the command console (if needed)
-  const activateKeyWatcher = config.get('activateCommandKeyWatcher', false)
-  if (activateKeyWatcher) setKeyWatcher()
+  // // Activate the command console (if needed)
+  // const activateKeyWatcher = config.get('activateCommandKeyWatcher', false)
+  // if (activateKeyWatcher) setKeyWatcher()
 
   // Start listening for REST API calls
   app.listen(3000)
 
-  // Print the app version
-  logger.log(`version: ${version}`)
-
-  // de/re-activate the keywatcher if config is altered
-  config.on('reloaded', () => {
-    if (config.get('activateCommandKeyWatcher', false)) {
-      setKeyWatcher()
-    } else {
-      removeKeyWatcher()
-    }
-  })
+  // // de/re-activate the keywatcher if config is altered
+  // config.on('reloaded', () => {
+  //   if (config.get('activateCommandKeyWatcher', false)) {
+  //     setKeyWatcher()
+  //   } else {
+  //     removeKeyWatcher()
+  //   }
+  // })
 }
 bootstrap()
 
+//TODO! keyListener gedoen naar aparte klasse verhuizen
 const listener = async (key: string, data: any) => {
   if (data.ctrl === true && data.name === 'c') {
     removeKeyWatcher()

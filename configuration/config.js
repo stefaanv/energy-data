@@ -1,6 +1,6 @@
 exports.default = () => ({
-  version: '{{pkg.version}}',
   activateCommandKeyWatcher: false,
+  controllerSchedule: '*/10 * * * * *',
   batteryConfig: {
     capacity: 10,
     maxChargePower: 5000,
@@ -19,11 +19,29 @@ exports.default = () => ({
           power: 0,
           duration: 0,
         },
-        powerKey: 'power',
-        wattToPowerMultiplier: 1,
-        durationKey: 'duration',
-        minutesToDurationMultiplier: 1,
+      },
+      forciblyDischargeCommand: {
+        url: 'huawei_solar/forcible_discharge',
+        postData: {
+          device_id: 'd36a4ede8885b40373c9b4d100e7f139',
+          power: 0,
+          duration: 0,
+        },
+      },
+      stopForciblyChargeDischarge: {
+        url: 'huawei_solar/stop_forcible_charge',
+        postData: {
+          device_id: 'd36a4ede8885b40373c9b4d100e7f139',
+        },
       },
     },
   },
+  chargeList: [
+    {
+      mode: 'charge',
+      from: '7/10/2023 10:20:30',
+      till: '7/10/2023 11:20:30',
+      power: 2000,
+    },
+  ],
 })
