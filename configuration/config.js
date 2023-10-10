@@ -11,7 +11,8 @@ exports.default = () => ({
   },
   homeAssistant: {
     baseUrl: 'http://homeassistant.local:8123/api/services',
-    servicesUrl: 'services',
+    bearerToken: '{{ENV_BEARER_TOKEN}}',
+    servicesUrl: '/services',
     commands: {
       forciblyChargeCommand: {
         url: 'huawei_solar/forcible_charge',
@@ -40,9 +41,15 @@ exports.default = () => ({
   taskList: [
     {
       mode: 'discharge',
-      from: '2023-10-06 21:00:30',
-      till: '2023-10-06 21:59:30',
-      power: 2000,
+      from: '2023-10-09 21:30:00',
+      till: '2023-10-09 22:45:00',
+      power: 1000,
+    },
+    {
+      mode: 'charge',
+      from: '2023-10-10 04:00:00',
+      till: '2023-10-10 06:00:00',
+      power: 1500,
     },
   ],
 })

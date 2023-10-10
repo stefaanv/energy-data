@@ -1,5 +1,14 @@
 import * as Joi from 'Joi'
 
+export const HA_CKEY = 'homeAssistant'
+export const HA_SERVICE_CKY = 'servicesUrl'
+export const HA_BASEURL_CKEY = 'baseUrl'
+export const HA_CMD_CKEY = 'commands'
+export const HA_BEARER_TOKEN_CKEY = 'bearerToken'
+export const HA_STOP_CMD_CKEY = 'stopForciblyChargeDischarge'
+export const HA_CHARGE_CKEY = 'forciblyChargeCommand'
+export const HA_DISCH_CMD_CKEY = 'forciblyDischargeCommand'
+
 const batteryConfigSchema = Joi.object({
   capacity: Joi.number().description('battery capacity in kWh'),
   maxChargePower: Joi.number().description('max charge power in Watt'),
@@ -21,12 +30,13 @@ const homeAssistantCommand = stopCommandSchema.append({
 })
 
 const homeAssistantSchema = Joi.object({
-  baseUrl: Joi.string().uri(),
-  servicesUrl: Joi.string(),
-  commands: Joi.object({
-    forciblyChargeCommand: homeAssistantCommand.required(),
-    forciblyDischargeCommand: homeAssistantCommand.required(),
-    stopForciblyChargeDischarge: stopCommandSchema.required(),
+  [HA_BASEURL_CKEY]: Joi.string().uri(),
+  [HA_SERVICE_CKY]: Joi.string(),
+  [HA_BEARER_TOKEN_CKEY]: Joi.string(),
+  [HA_CMD_CKEY]: Joi.object({
+    [HA_CHARGE_CKEY]: homeAssistantCommand.required(),
+    [HA_DISCH_CMD_CKEY]: homeAssistantCommand.required(),
+    [HA_STOP_CMD_CKEY]: stopCommandSchema.required(),
   }),
 })
 
@@ -43,6 +53,6 @@ export const configValidationSchema = Joi.object({
   batteryMonitorInterval: Joi.number().description('in seconds'),
   TimeZone: Joi.string().default('Europe/Brussels'),
   batteryConfig: batteryConfigSchema.required(),
-  homeAssistant: homeAssistantSchema.required(),
+  [HA_CKEY]: homeAssistantSchema.required(),
   taskList: Joi.array().items(chargeDischargeSchema).required(),
 })

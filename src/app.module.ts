@@ -7,6 +7,7 @@ import { DrizzleModule } from './drizzle/drizzle.module'
 import { LoggerService } from './logger.service'
 import { BatteryMonitorService } from './battery-monitor.service'
 import { ScheduleModule } from '@nestjs/schedule'
+import { HomeAssistantCommuncationService } from './home-assistant-communication.service'
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { ScheduleModule } from '@nestjs/schedule'
     ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
-  providers: [AppService, LoggerService, BatteryMonitorService],
+  providers: [AppService, LoggerService, BatteryMonitorService, HomeAssistantCommuncationService],
   exports: [LoggerService],
 })
 export class AppModule {}

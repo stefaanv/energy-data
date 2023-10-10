@@ -1,28 +1,32 @@
 import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
 import { Injectable } from '@nestjs/common'
 import { SchedulerRegistry } from '@nestjs/schedule'
-import { BatteryConfig, ChargeSetting, ForciblyCharge } from './energy-actions/forcibly-load'
+import { BatteryConfig, ChargeSetting, ForciblyCharge } from './energy-actions/forcibly-charge'
 import { zonedTimeToUtc } from 'date-fns-tz'
+import { HomeAssistantCommuncationService } from './home-assistant-communication.service'
 
 @Injectable()
 export class BatteryMonitorService {
-  private _taskListProxy: () => Array<ChargeSetting>
   private _timeZone: string
+  private _taskList: Array<ForciblyCharge>
 
   constructor(
-    config: ConfigService,
+    private readonly _config: ConfigService,
     private _schedulerRegistry: SchedulerRegistry,
+    private readonly _commService: HomeAssistantCommuncationService,
   ) {
-    ForciblyCharge.config = config.get<BatteryConfig>('batteryConfig')
-    this._timeZone = config.get('timeZone')
-    this._taskListProxy = config.createProxy<Array<ChargeSetting>>('taskList')
-    const interval = 1000 * config.get<number>('batteryMonitorInterval')
-    this._schedulerRegistry.addInterval('monitorInterval', interval)
-    setTimeout(() => this.monitor(), 1000)
+    ForciblyCharge.config = _config.get<BatteryConfig>('batteryConfig')
+    this._timeZone = _config.get('timeZone')
+    const schedulerPeriodMs = 1000 * _config.get<number>('batteryMonitorInterval')
+    const schedulerInterval = setInterval(() => this.monitor(), schedulerPeriodMs)
+    this._schedulerRegistry.addInterval('monitorInterval', schedulerInterval)
+    this.loadTaskListFromConfig()
+    _config.on('reloaded', () => this.loadTaskListFromConfig())
   }
 
-  get taskList(): Array<ForciblyCharge> {
-    return this._taskListProxy().map(task => {
+  loadTaskListFromConfig() {
+    console.log('reloading tasklist')
+    this._taskList = this._config.get<Array<ChargeSetting>>('taskList').map(task => {
       const from = zonedTimeToUtc(task.from, this._timeZone)
       const till = zonedTimeToUtc(task.till, this._timeZone)
       return new ForciblyCharge({ ...task, from, till })
@@ -31,9 +35,17 @@ export class BatteryMonitorService {
 
   monitor() {
     const now = new Date()
-    for (const fc of this.taskList) {
-      if (fc.isWithinPeriod(now)) console.log(`nu is in period !!!`)
-      else console.log(`nu is BUITEN period !!!`)
+    // console.log(format(now, 'HH:mm:ss'))
+    for (const fc of this._taskList) {
+      if (fc.isWithinPeriod(now) && !fc.commandSent) {
+        const duration = fc.periodInMinutes
+        console.log(
+          `Starting ${Math.abs(fc._power)}W forcibly ${fc._power > 0 ? '' : 'dis'}` +
+            `charge for ${fc.periodInMinutes} minutes`,
+        )
+        this._commService.startForcibly(fc._power, duration)
+        fc.commandSent = true
+      }
     }
   }
 }

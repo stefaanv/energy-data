@@ -35,6 +35,17 @@ async function bootstrap() {
 }
 bootstrap()
 
+// async function bootstrap2() {
+//   const url = 'http://homeassistant.local:8123/api/services/huawei_solar/stop_forcible_charge'
+//   const data = { device_id: 'd36a4ede8885b40373c9b4d100e7f139' }
+//   const bearer =
+//     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI0YjFmY2EyOWU5ZWU0NTJiYmRiNTY4MjNkZjJhNWRkNCIsImlhdCI6MTY5NTc1MDk2MSwiZXhwIjoyMDExMTEwOTYxfQ.YUn0PYL8xc2kpE9yGI1N2NK9SGkkAVEFm1mf9QT5DI8'
+
+//   const options = { headers: { Authorization: `Bearer ${bearer}` } }
+//   const result = await axios.post(url, data, options)
+//   console.log(result.data)
+// }
+
 //TODO! keyListener gedoen naar aparte klasse verhuizen
 const listener = async (key: string, data: any) => {
   if (data.ctrl === true && data.name === 'c') {

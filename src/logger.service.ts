@@ -1,4 +1,7 @@
 import { ConsoleLogger, ConsoleLoggerOptions, Injectable, Scope } from '@nestjs/common'
+import { appendFileSync } from 'fs'
+
+const LOG_FILE_PATH = '../application.log'
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class LoggerService extends ConsoleLogger {
@@ -9,6 +12,7 @@ export class LoggerService extends ConsoleLogger {
     super(context, options)
   }
   log(message: any, ...optionalParams: any[]) {
+    appendFileSync(LOG_FILE_PATH, message)
     super.log(message, ...optionalParams)
   }
 
