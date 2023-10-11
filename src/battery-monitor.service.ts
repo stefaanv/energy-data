@@ -39,11 +39,8 @@ export class BatteryMonitorService {
     for (const fc of this._taskList) {
       if (fc.isWithinPeriod(now) && !fc.commandSent) {
         const duration = fc.periodInMinutes
-        console.log(
-          `Starting ${Math.abs(fc._power)}W forcibly ${fc._power > 0 ? '' : 'dis'}` +
-            `charge for ${fc.periodInMinutes} minutes`,
-        )
-        this._commService.startForcibly(fc._power, duration)
+        const sign = fc.setting.mode === 'charge' ? 1 : -1
+        this._commService.startForcibly(sign * fc._power, duration)
         fc.commandSent = true
       }
     }

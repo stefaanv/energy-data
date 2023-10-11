@@ -12,104 +12,65 @@ import {
 } from './config-validator.joi'
 import { LoggerService } from './logger.service'
 
-@Injectable()
-export class HomeAssistantCommuncationService {
-  private readonly _baseUrl: string
-  private readonly _haStopChargeCommand: HA_StopChargeCmd
-  private readonly _haForciblyChargeCommand: HA_ChargeCmd
-  private readonly _haForciblyDischargeCommand: HA_ChargeCmd
-
-  constructor(
-    config: ConfigService,
-    private readonly _log: LoggerService,
-  ) {
-    const baseUrl = config.get([HA_CKEY, HA_BASEURL_CKEY])
-    const bearer = config.get([HA_CKEY, HA_BEARER_TOKEN_CKEY])
-    const headers = { Authorization: `Bearer ${bearer}` }
-    HA_CommandBase.commonConfig = { baseUrl, options: { headers } }
-
-    const cmdPrefix = [HA_CKEY, HA_CMD_CKEY]
-    const stopConfig = config.get<HA_CmdConfigBase>([...cmdPrefix, HA_STOP_CMD_CKEY])
-    this._haStopChargeCommand = new HA_StopChargeCmd(stopConfig)
-
-    const chargeConfig = config.get<HA_ChgCmdConfig>([...cmdPrefix, HA_CHARGE_CKEY])
-    this._haForciblyChargeCommand = new HA_ChargeCmd(chargeConfig)
-
-    const dischargeConfig = config.get<HA_ChgCmdConfig>([...cmdPrefix, HA_DISCH_CMD_CKEY])
-    this._haForciblyDischargeCommand = new HA_ChargeCmd(dischargeConfig)
-  }
-
-  stopForciblyCharge() {
-    this._haStopChargeCommand.send()
-  }
-
-  startForcibly(/** in Watt */ power: number, /** in minutes */ time: number) {
-    if (power > 0) {
-      this._haForciblyChargeCommand.send(power, time)
-    } else {
-      this._haForciblyDischargeCommand.send(-power, time)
-    }
-  }
-
-  startForciblyDischarge(/** in Watt */ power: number, /** in minutes */ time: number) {
-    this._haForciblyDischargeCommand.send(power, time)
-  }
-}
-
-interface HA_CmdConfigBase {
+interface CmdConfigBase {
   url: string
   postData: Record<string, string | number>
 }
 
-interface HA_CmdCommonConfig {
-  baseUrl: string
-  options: { headers: Record<string, string> }
-}
-
-class HA_CommandBase<TConfig extends HA_CmdConfigBase> {
-  static commonConfig: HA_CmdCommonConfig
-  private urlJoin: any
-  constructor(protected readonly _config: TConfig) {
-    import('url-join').then(uj => (this.urlJoin = uj))
-  }
-
-  get url() {
-    return this.urlJoin.default(HA_CommandBase.commonConfig.baseUrl, this._config.url)
-  }
-  get headers() {
-    return HA_CommandBase.commonConfig.options
-  }
-}
-
-class HA_StopChargeCmd extends HA_CommandBase<HA_CmdConfigBase> {
-  constructor(config: HA_CmdConfigBase) {
-    super(config)
-  }
-  async send() {
-    try {
-      const result = await axios.post(this.url, this._config.postData, this.headers)
-    } catch (error) {}
-  }
-}
-
-interface HA_ChgCmdConfig extends HA_CmdConfigBase {
+interface ChgCmdConfig extends CmdConfigBase {
   powerKey: string
   durationKey: string
   wattToPowerMultiplier: number
   minutesToDurationMultiplier: number
 }
 
-class HA_ChargeCmd extends HA_CommandBase<HA_ChgCmdConfig> {
-  constructor(config: HA_ChgCmdConfig) {
-    super(config)
+@Injectable()
+export class HomeAssistantCommuncationService {
+  private readonly _baseUrl: string
+  private readonly _axiosOptions: any
+  private readonly _haStopChargeConfig: CmdConfigBase
+  private readonly _haForciblyChargeConfig: ChgCmdConfig
+  private readonly _haForciblyDischargeConfig: ChgCmdConfig
+
+  constructor(
+    config: ConfigService,
+    private readonly _log: LoggerService,
+  ) {
+    this._baseUrl = config.get([HA_CKEY, HA_BASEURL_CKEY])
+    const bearer = config.get([HA_CKEY, HA_BEARER_TOKEN_CKEY])
+    const headers = { Authorization: `Bearer ${bearer}` }
+    this._axiosOptions = { baseURL: this._baseUrl, headers }
+
+    const cmdPrefix = [HA_CKEY, HA_CMD_CKEY]
+    this._haStopChargeConfig = config.get<CmdConfigBase>([...cmdPrefix, HA_STOP_CMD_CKEY])
+    this._haForciblyChargeConfig = config.get<ChgCmdConfig>([...cmdPrefix, HA_CHARGE_CKEY])
+    this._haForciblyDischargeConfig = config.get<ChgCmdConfig>([...cmdPrefix, HA_DISCH_CMD_CKEY])
   }
 
-  async send(/** in Watt */ power: number, /** in minutes */ time: number) {
-    // TODO: power en period nog berekenen
-    const postData = this._config.postData
-    postData[this._config.powerKey] = power * this._config.wattToPowerMultiplier
-    postData[this._config.durationKey] = time * this._config.minutesToDurationMultiplier
-    const result = await axios.post(this.url, this._config.postData, this.headers)
-    console.log(result.statusText)
+  async stopForciblyCharge() {
+    const config = this._haStopChargeConfig
+    const url = this._baseUrl + '/' + config.url
+    try {
+      const result = await axios.post(url, config.postData, this._axiosOptions)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  async startForcibly(/** in Watt */ power: number, /** in minutes */ time: number) {
+    const config = power > 0 ? this._haForciblyChargeConfig : this._haForciblyDischargeConfig
+    const url = config.url //joinUrlParts(this._baseUrl, config.url)
+    const postData = config.postData
+    const powerInWatt = Math.abs(power * config.wattToPowerMultiplier)
+    postData[config.powerKey] = powerInWatt
+    const periodInMin = time * config.minutesToDurationMultiplier
+    postData[config.durationKey] = periodInMin
+    try {
+      const result = await axios.post(url, config.postData, this._axiosOptions)
+      const mode = power > 0 ? '' : 'dis'
+      console.log(`Started ${powerInWatt}W forcibly ${mode}charge for ${periodInMin} minutes`)
+    } catch (error) {
+      console.error(error.message)
+    }
   }
 }

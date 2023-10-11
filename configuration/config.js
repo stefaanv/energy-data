@@ -9,6 +9,17 @@ exports.default = () => ({
     lowerSocLimit: 11,
     upperSocLimit: 100,
   },
+  dynamicPrices: {
+    url: 'https://spot.56k.guru/api/v2/hass',
+    params: {
+      currency: 'EUR',
+      area: 'BE',
+      multiplier: 1,
+      extra: 0,
+      factor: 1,
+      decimals: 5,
+    },
+  },
   homeAssistant: {
     baseUrl: 'http://homeassistant.local:8123/api/services',
     bearerToken: '{{ENV_BEARER_TOKEN}}',
@@ -40,16 +51,16 @@ exports.default = () => ({
   },
   taskList: [
     {
-      mode: 'discharge',
-      from: '2023-10-09 21:30:00',
-      till: '2023-10-09 22:45:00',
-      power: 1000,
+      mode: 'charge',
+      from: '2023-10-11 16:00:00',
+      till: '2023-10-11 17:00:00',
+      power: 2000,
     },
     {
       mode: 'charge',
-      from: '2023-10-10 04:00:00',
-      till: '2023-10-10 06:00:00',
-      power: 1500,
+      from: '2023-10-12 03:00:00',
+      till: '2023-10-12 05:59:00',
+      power: 2000,
     },
   ],
 })

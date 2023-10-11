@@ -8,6 +8,9 @@ export const HA_BEARER_TOKEN_CKEY = 'bearerToken'
 export const HA_STOP_CMD_CKEY = 'stopForciblyChargeDischarge'
 export const HA_CHARGE_CKEY = 'forciblyChargeCommand'
 export const HA_DISCH_CMD_CKEY = 'forciblyDischargeCommand'
+export const DYN_PRICING_CKEY = 'dynamicPrices'
+export const DYN_PRICING_URL_CKEY = 'url'
+export const DYN_PRICING_PARAMS_CKEY = 'params'
 
 const batteryConfigSchema = Joi.object({
   capacity: Joi.number().description('battery capacity in kWh'),

@@ -28,20 +28,22 @@ export class ForciblyCharge {
   private readonly _powerLimit: number
   public commandSent: boolean
 
-  constructor(private readonly _setting: ChargeSetting) {
+  constructor(public readonly setting: ChargeSetting) {
     const config = ForciblyCharge.config
-    this._target = !_setting.target
+    this._target = !setting.target
       ? undefined
-      : Math.min(Math.max(_setting.target ?? 0, config.lowerSocLimit), config.upperSocLimit)
-    this._powerLimit = _setting.mode === 'charge' ? config.maxChargePower : config.maxDischargePower
-    this._power = Math.max(0, Math.min(_setting.power, this._powerLimit))
+      : Math.min(Math.max(setting.target ?? 0, config.lowerSocLimit), config.upperSocLimit)
+    this._powerLimit = setting.mode === 'charge' ? config.maxChargePower : config.maxDischargePower
+    this._power = Math.max(0, Math.min(setting.power, this._powerLimit))
     this.commandSent = false
 
-    if (!isBefore(_setting.from, _setting.till)) throw new Error('from must be before till')
+    if (!isBefore(setting.from, setting.till)) throw new Error('from must be before till')
   }
 
   get periodInMinutes() {
-    return differenceInMinutes(this._setting.till, this._setting.from)
+    const now = new Date()
+    const startTime = this.isWithinPeriod(now) ? now : this.setting.from
+    return differenceInMinutes(this.setting.till, startTime)
   }
 
   get periodInHours() {
@@ -52,7 +54,7 @@ export class ForciblyCharge {
    * @param currentSOC percentage (0-100) of
    */
   calcPower(currentSOC: number): number | undefined {
-    const setting = this._setting
+    const setting = this.setting
     // Target gedefinieerd
     // Niets doen wanneer het target al overschreden is
     if (
@@ -79,7 +81,7 @@ export class ForciblyCharge {
   }
 
   isWithinPeriod(time: Date) {
-    return isBefore(this._setting.from, time) && isBefore(time, this._setting.till)
+    return isBefore(this.setting.from, time) && isBefore(time, this.setting.till)
   }
 
   get power() {

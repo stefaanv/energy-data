@@ -8,6 +8,7 @@ import { LoggerService } from './logger.service'
 import { BatteryMonitorService } from './battery-monitor.service'
 import { ScheduleModule } from '@nestjs/schedule'
 import { HomeAssistantCommuncationService } from './home-assistant-communication.service'
+import { PricingService } from './pricing.service'
 
 @Module({
   imports: [
@@ -22,7 +23,13 @@ import { HomeAssistantCommuncationService } from './home-assistant-communication
     ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
-  providers: [AppService, LoggerService, BatteryMonitorService, HomeAssistantCommuncationService],
-  exports: [LoggerService],
+  providers: [
+    AppService,
+    LoggerService,
+    BatteryMonitorService,
+    HomeAssistantCommuncationService,
+    PricingService,
+  ],
+  exports: [LoggerService, ConfigModule],
 })
 export class AppModule {}
