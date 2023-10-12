@@ -1,7 +1,6 @@
 import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
 import { Inject, Injectable } from '@nestjs/common'
 import * as axios from 'axios'
-import {} from 'axios'
 
 import {
   DYN_PRICING_CKEY,
