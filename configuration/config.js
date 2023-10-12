@@ -9,7 +9,7 @@ exports.default = () => ({
     lowerSocLimit: 11,
     upperSocLimit: 100,
   },
-  dynamicPrices: {
+  belpexSpot: {
     url: 'https://spot.56k.guru/api/v2/hass',
     params: {
       currency: 'EUR',

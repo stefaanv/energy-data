@@ -1,12 +1,7 @@
 import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
 import { Inject, Injectable } from '@nestjs/common'
 import * as axios from 'axios'
-
-import {
-  DYN_PRICING_CKEY,
-  DYN_PRICING_URL_CKEY,
-  DYN_PRICING_PARAMS_CKEY,
-} from './config-validator.joi'
+import { BELPEX_CKEY, BELPEX_URL_CKEY, BELPEX_PARAMS_CKEY } from './config-validator.joi'
 import { LoggerService } from './logger.service'
 import { addHours, isBefore, parseISO } from 'date-fns'
 import { format, utcToZonedTime } from 'date-fns-tz'
@@ -28,8 +23,8 @@ export class PricingService {
     private readonly _log: LoggerService,
     @Inject(DRIZZLE_CONNECTION) private readonly _conn: Database<typeof schema>,
   ) {
-    this._url = config.get([DYN_PRICING_CKEY, DYN_PRICING_URL_CKEY])
-    this._urlParams = config.get<GetParams>([DYN_PRICING_CKEY, DYN_PRICING_PARAMS_CKEY])
+    this._url = config.get([BELPEX_CKEY, BELPEX_URL_CKEY])
+    this._urlParams = config.get<GetParams>([BELPEX_CKEY, BELPEX_PARAMS_CKEY])
     this._timeZone = config.get('timeZone')
   }
 
