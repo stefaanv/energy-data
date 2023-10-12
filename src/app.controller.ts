@@ -4,7 +4,7 @@ import { HomeAssistantCommuncationService } from './home-assistant-communication
 import Database from 'better-sqlite3'
 import { DRIZZLE_CONNECTION } from './drizzle/drizzle.module'
 import * as schema from './drizzle/schema'
-import { PricingService } from './pricing.service'
+import { PricingService } from './index.service'
 
 @Controller()
 export class AppController {
@@ -51,19 +51,19 @@ export class AppController {
 
   @Get('db-insert')
   async getDbAdd() {
-    type NewContract = typeof schema.contract.$inferInsert
-    const testContract: NewContract = { name: 'Engie Dynamic' }
-    await this._conn.insert(schema.contract).values(testContract)
+    type NewContract = typeof schema.index.$inferInsert
+    const testContract: NewContract = { name: 'Spot Belpex' }
+    await this._conn.insert(schema.index).values(testContract)
     return 'New contract added'
   }
 
   @Get('db-select')
   async getDbTest() {
-    return this._conn.select().from(schema.electricityPrice).all()
+    return this._conn.select().from(schema.indexVvalues).all()
   }
 
   @Get('pricing')
   async getPricing() {
-    return this._pricingService.loadCurrentPricingData()
+    return this._pricingService.loadIndexData()
   }
 }

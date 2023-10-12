@@ -33,18 +33,18 @@ export class PricingService {
     this._timeZone = config.get('timeZone')
   }
 
-  async loadCurrentPricingData() {
+  async loadIndexData() {
+    const indexValues = schema.indexVvalues
     try {
       const uri = axios.getUri({ url: this._url, params: this._urlParams })
       const aresult = await axios.get<SpotResult>(uri)
       const spotPrices = new TransformedSpotResult(aresult.data, this._timeZone)
       const qResult = await this._conn
         .select()
-        .from(schema.electricityPrice)
-        .orderBy(schema.electricityPrice.periodStart)
+        .from(indexValues)
+        .orderBy(indexValues.periodStart)
         .limit(1)
       const lastKnowPrice = qResult.length === 0 ? new Date(1970, 1) : qResult[0]
-      console.log('lastKnowPrice', lastKnowPrice)
       const newPrices = spotPrices.data.filter(dp => isBefore(lastKnowPrice, dp.startTime))
 
       const bulkInsert = newPrices.map(
@@ -54,10 +54,10 @@ export class PricingService {
             periodStart: dp.startTime,
             periodEnd: addHours(dp.startTime, 1),
             price: dp.price,
-          }) as typeof schema.electricityPrice.$inferInsert,
+          }) as typeof indexValues.$inferInsert,
       )
       if (bulkInsert.length > 0) {
-        await this._conn.insert(schema.electricityPrice).values(bulkInsert)
+        await this._conn.insert(indexValues).values(bulkInsert)
       }
       return newPrices
     } catch (error) {

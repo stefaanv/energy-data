@@ -3,15 +3,15 @@ import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 // migraties aanmaken met npm exec drizzle-kit generate:sqlite --out src/migrations --schema src/drizzle/schema.ts
 // in de root folder
 
-export const electricityPrice = sqliteTable('electricity-prices', {
+export const indexVvalues = sqliteTable('index-values', {
   id: integer('id', { mode: 'number' }).primaryKey({ autoIncrement: true }),
-  contractId: integer('contractId'),
+  contractId: integer('indexId'),
   periodStart: integer('periodStart', { mode: 'timestamp' }),
   periodEnd: integer('periodEnd', { mode: 'timestamp' }),
-  price: real('price'),
+  price: real('value'),
 })
 
-export const contract = sqliteTable('contracts', {
+export const index = sqliteTable('index', {
   id: integer('id', { mode: 'number' }).primaryKey({ autoIncrement: true }),
   name: text('name'),
 })
