@@ -10,10 +10,11 @@ import {
 } from './config-validator.joi'
 import { LoggerService } from './logger.service'
 import { addHours, isBefore, parseISO } from 'date-fns'
-import { utcToZonedTime } from 'date-fns-tz'
+import { format, utcToZonedTime } from 'date-fns-tz'
 import { DRIZZLE_CONNECTION } from './drizzle/drizzle.module'
 import Database from 'better-sqlite3'
 import * as schema from './drizzle/schema'
+import { first, last } from 'radash'
 
 type GetParams = Record<string, string | number>
 
@@ -37,8 +38,8 @@ export class PricingService {
     const indexValues = schema.indexVvalues
     try {
       const uri = axios.getUri({ url: this._url, params: this._urlParams })
-      const aresult = await axios.get<SpotResult>(uri)
-      const spotPrices = new TransformedSpotResult(aresult.data, this._timeZone)
+      const aResult = await axios.get<SpotResult>(uri)
+      const spotPrices = new TransformedSpotResult(aResult.data, this._timeZone)
       const qResult = await this._conn
         .select()
         .from(indexValues)
@@ -59,6 +60,11 @@ export class PricingService {
       if (bulkInsert.length > 0) {
         await this._conn.insert(indexValues).values(bulkInsert)
       }
+
+      const tzOptions = { timeZone: 'Europe/Brussels' }
+      const dFrom = format(first(spotPrices.data).startTime, 'dd/MM/yy HH:mm', tzOptions)
+      const dTill = format(last(spotPrices.data).startTime, 'dd/MM/yy HH:mm', tzOptions)
+      console.log(`Loaded Sport Epex data from ${dFrom} - ${dTill}`)
       return newPrices
     } catch (error) {
       console.log(error)
