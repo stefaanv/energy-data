@@ -4,7 +4,7 @@ import { HomeAssistantCommuncationService } from './home-assistant-communication
 import Database from 'better-sqlite3'
 import { DRIZZLE_CONNECTION } from './drizzle/drizzle.module'
 import * as schema from './drizzle/schema'
-import { PricingService } from './index.service'
+import { PricingService } from './pricing.service'
 
 @Controller()
 export class AppController {

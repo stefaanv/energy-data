@@ -8,7 +8,7 @@ import { LoggerService } from './logger.service'
 import { BatteryMonitorService } from './battery-monitor.service'
 import { ScheduleModule } from '@nestjs/schedule'
 import { HomeAssistantCommuncationService } from './home-assistant-communication.service'
-import { PricingService } from './index.service'
+import { PricingService } from './pricing.service'
 
 @Module({
   imports: [
