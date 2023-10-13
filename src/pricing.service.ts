@@ -79,7 +79,7 @@ export class PricingService {
     }
   }
 
-  public async getBelpexSince(date: Date) {
+  public async getBelpexSince(date: Date): Promise<IndexValue[]> {
     const allBelpex = this._em.find(IndexValue, {
       /*startTime: { $lt: date }*/
     })

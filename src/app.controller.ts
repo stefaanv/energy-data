@@ -6,6 +6,7 @@ import { EntityManager, EntityRepository, MikroORM } from '@mikro-orm/core'
 import { Index } from './entities/index.entity'
 import { subDays } from 'date-fns'
 import { IndexValue } from './entities/index-value.entity'
+import { format } from 'date-fns-tz'
 
 @Controller()
 export class AppController {
@@ -53,7 +54,9 @@ export class AppController {
   @Get('belpex')
   async getBelpex() {
     const twoDaysAgo = subDays(new Date(), 2)
-    return this._pricingService.getBelpexSince(twoDaysAgo)
+    const json = await this._pricingService.getBelpexSince(twoDaysAgo)
+    const ashtml = asTable(json)
+    return ashtml
   }
 
   @Get('pricing')
@@ -63,4 +66,15 @@ export class AppController {
   }
 }
 
-function asTable(values: IndexValue) {}
+function asTable(values: IndexValue[]) {
+  return (
+    '<table><tr><th>startTime</th><th>value</th></tr>' +
+    values
+      .map(v => {
+        const fTime = format(v.startTime, 'd/MM HH:mm', { timeZone: 'Europe/Brussels' })
+        return `<tr><td>${fTime}</td><td>${v.price}</td></tr>`
+      })
+      .join() +
+    '</table>'
+  )
+}
