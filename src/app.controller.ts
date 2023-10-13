@@ -1,18 +1,18 @@
 import { Controller, Get, Inject, Param } from '@nestjs/common'
 import { AppService } from './app.service'
 import { HomeAssistantCommuncationService } from './home-assistant-communication.service'
-import Database from 'better-sqlite3'
-import { DRIZZLE_CONNECTION } from './drizzle/drizzle.module'
-import * as schema from './drizzle/schema'
 import { PricingService } from './pricing.service'
+import { EntityManager, EntityRepository, MikroORM } from '@mikro-orm/core'
+import { InjectRepository } from '@mikro-orm/nestjs'
+import { Index } from './entities/index.entity'
 
 @Controller()
 export class AppController {
   constructor(
     private readonly _appService: AppService,
     private readonly _haCommService: HomeAssistantCommuncationService,
-    @Inject(DRIZZLE_CONNECTION) private readonly _conn: Database<typeof schema>,
     private readonly _pricingService: PricingService,
+    private readonly _em: EntityManager,
   ) {}
 
   @Get()
@@ -51,19 +51,19 @@ export class AppController {
 
   @Get('db-insert')
   async getDbAdd() {
-    type NewContract = typeof schema.index.$inferInsert
-    const testContract: NewContract = { name: 'Spot Belpex' }
-    await this._conn.insert(schema.index).values(testContract)
+    const newIndex = this._em.create(Index, { name: 'Spot Belpex' })
+    this._em.persist(newIndex)
     return 'New contract added'
   }
 
   @Get('db-select')
   async getDbTest() {
-    return this._conn.select().from(schema.indexVvalues).all()
+    const indices = await this._em.find(Index, {})
+    return indices
   }
 
-  @Get('pricing')
-  async getPricing() {
-    return this._pricingService.loadIndexData()
-  }
+  // @Get('pricing')
+  // async getPricing() {
+  //   return this._pricingService.loadIndexData()
+  // }
 }
