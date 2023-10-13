@@ -74,7 +74,7 @@ function asTable(values: IndexValue[]) {
         const fTime = format(v.startTime, 'd/MM HH:mm', { timeZone: 'Europe/Brussels' })
         return `<tr><td>${fTime}</td><td>${v.price}</td></tr>`
       })
-      .join() +
+      .join('') +
     '</table>'
   )
 }
