@@ -3,8 +3,9 @@ import { AppService } from './app.service'
 import { HomeAssistantCommuncationService } from './home-assistant-communication.service'
 import { PricingService } from './pricing.service'
 import { EntityManager, EntityRepository, MikroORM } from '@mikro-orm/core'
-import { InjectRepository } from '@mikro-orm/nestjs'
 import { Index } from './entities/index.entity'
+import { subDays } from 'date-fns'
+import { IndexValue } from './entities/index-value.entity'
 
 @Controller()
 export class AppController {
@@ -49,21 +50,17 @@ export class AppController {
     return this._appService.getConfig()
   }
 
-  @Get('db-insert')
-  async getDbAdd() {
-    const newIndex = this._em.create(Index, { name: 'Spot Belpex' })
-    this._em.persist(newIndex)
-    return 'New contract added'
+  @Get('belpex')
+  async getBelpex() {
+    const twoDaysAgo = subDays(new Date(), 2)
+    return this._pricingService.getBelpexSince(twoDaysAgo)
   }
 
-  @Get('db-select')
-  async getDbTest() {
-    const indices = await this._em.find(Index, {})
-    return indices
+  @Get('pricing')
+  async getPricing() {
+    this._pricingService.loadIndexData()
+    return 'OK'
   }
-
-  // @Get('pricing')
-  // async getPricing() {
-  //   return this._pricingService.loadIndexData()
-  // }
 }
+
+function asTable(values: IndexValue) {}

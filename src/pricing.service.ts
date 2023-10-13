@@ -1,65 +1,90 @@
 import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
-import { Inject, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import * as axios from 'axios'
 import { BELPEX_CKEY, BELPEX_URL_CKEY, BELPEX_PARAMS_CKEY } from './config-validator.joi'
 import { LoggerService } from './logger.service'
 import { addHours, isBefore, parseISO } from 'date-fns'
 import { format, utcToZonedTime } from 'date-fns-tz'
 import { first, last } from 'radash'
+import { EntityManager } from '@mikro-orm/core'
+import { Index } from './entities/index.entity'
+import { IndexValue } from './entities/index-value.entity'
 
 type GetParams = Record<string, string | number>
+const SPOT_BELPEX_NAME = 'Spot Belpex'
 
 @Injectable()
 export class PricingService {
   private readonly _url: string
   private readonly _urlParams: GetParams
   private _timeZone: string
+  private _spotBelpex: Index
 
   constructor(
     config: ConfigService,
     private readonly _log: LoggerService,
+    private readonly _em: EntityManager,
   ) {
     this._url = config.get([BELPEX_CKEY, BELPEX_URL_CKEY])
     this._urlParams = config.get<GetParams>([BELPEX_CKEY, BELPEX_PARAMS_CKEY])
     this._timeZone = config.get('timeZone')
+    this.selectOrCreateBelpexIndex()
   }
 
-  // async loadIndexData() {
-  //   const indexValues = []
-  //   try {
-  //     const uri = axios.getUri({ url: this._url, params: this._urlParams })
-  //     const aResult = await axios.get<SpotResult>(uri)
-  //     const spotPrices = new TransformedSpotResult(aResult.data, this._timeZone)
-  //     const qResult = await this._conn
-  //       .select()
-  //       .from(indexValues)
-  //       .orderBy(indexValues.periodStart)
-  //       .limit(1)
-  //     const lastKnowPrice = qResult.length === 0 ? new Date(1970, 1) : qResult[0]
-  //     const newPrices = spotPrices.data.filter(dp => isBefore(lastKnowPrice, dp.startTime))
+  private async selectOrCreateBelpexIndex() {
+    const em = this._em.fork()
+    const values = await em.find(Index, { name: SPOT_BELPEX_NAME }, { orderBy: { id: 'asc' } })
+    if (values.length === 0) {
+      this._spotBelpex = em.create(Index, { name: SPOT_BELPEX_NAME })
+      em.persistAndFlush(this._spotBelpex)
+    } else {
+      this._spotBelpex = values[0]
+    }
+  }
 
-  //     const bulkInsert = newPrices.map(
-  //       dp =>
-  //         ({
-  //           contractId: 1,
-  //           periodStart: dp.startTime,
-  //           periodEnd: addHours(dp.startTime, 1),
-  //           price: dp.price,
-  //         }) as typeof indexValues.$inferInsert,
-  //     )
-  //     if (bulkInsert.length > 0) {
-  //       await this._conn.insert(indexValues).values(bulkInsert)
-  //     }
+  async loadIndexData() {
+    console.log(`Spot belpex id`, this._spotBelpex.id)
 
-  //     const tzOptions = { timeZone: 'Europe/Brussels' }
-  //     const dFrom = format(first(spotPrices.data).startTime, 'dd/MM/yy HH:mm', tzOptions)
-  //     const dTill = format(last(spotPrices.data).startTime, 'dd/MM/yy HH:mm', tzOptions)
-  //     console.log(`Loaded Sport Epex data from ${dFrom} - ${dTill}`)
-  //     return newPrices
-  //   } catch (error) {
-  //     console.log(error)
-  //   }
-  // }
+    const indexValues = []
+    try {
+      const uri = axios.getUri({ url: this._url, params: this._urlParams })
+      const aResult = await axios.get<SpotResult>(uri)
+      const spotPrices = new TransformedSpotResult(aResult.data, this._timeZone)
+      const lastValue = await this._em.findOne(
+        IndexValue,
+        { index: this._spotBelpex },
+        { orderBy: { startTime: 'DESC' } },
+      )
+      const lastKnowValueTime = lastValue ? lastValue.startTime : new Date(1970, 1)
+      const newPrices = spotPrices.data.filter(dp => isBefore(lastKnowValueTime, dp.startTime))
+
+      if (newPrices.length > 0) {
+        this._em.insertMany(
+          IndexValue,
+          newPrices.map(p => ({
+            startTime: p.startTime,
+            endTime: addHours(p.startTime, 1),
+            price: p.price,
+            index: this._spotBelpex,
+          })),
+        )
+        await this._em.flush()
+        const tzOptions = { timeZone: 'Europe/Brussels' }
+        const dFrom = format(first(spotPrices.data).startTime, 'dd/MM/yy HH:mm', tzOptions)
+        const dTill = format(last(spotPrices.data).startTime, 'dd/MM/yy HH:mm', tzOptions)
+        console.log(`Loaded Sport Epex data from ${dFrom} - ${dTill}`)
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  public async getBelpexSince(date: Date) {
+    const allBelpex = this._em.find(IndexValue, {
+      /*startTime: { $lt: date }*/
+    })
+    return allBelpex
+  }
 }
 
 export interface DataPoint {

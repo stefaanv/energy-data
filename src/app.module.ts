@@ -9,7 +9,9 @@ import { ScheduleModule } from '@nestjs/schedule'
 import { HomeAssistantCommuncationService } from './home-assistant-communication.service'
 import { PricingService } from './pricing.service'
 import { MikroOrmModule } from '@mikro-orm/nestjs'
-import { join } from 'path'
+
+// Db tables updaten: https://mikro-orm.io/docs/schema-generator
+//npx mikro-orm schema:update --run (werkt niet !)
 
 @Module({
   imports: [
@@ -24,7 +26,7 @@ import { join } from 'path'
     MikroOrmModule.forRoot({
       entities: ['./dist/entities'],
       entitiesTs: ['./src/entities'],
-      dbName: 'energy-data',
+      dbName: './db/sqlite.db',
       type: 'sqlite',
       autoLoadEntities: true,
       debug: true,
