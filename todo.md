@@ -1,1 +1,1 @@
-- get request voor opvragen huidige lijst geplande forcibles 
+- forciblies loggen

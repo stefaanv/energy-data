@@ -21,12 +21,12 @@ exports.default = () => ({
     },
   },
   homeAssistant: {
-    baseUrl: 'http://homeassistant.local:8123/api/services',
+    baseUrl: 'http://homeassistant.local:8123/api',
     bearerToken: '{{ENV_BEARER_TOKEN}}',
     servicesUrl: '/services',
     commands: {
       forciblyChargeCommand: {
-        url: 'huawei_solar/forcible_charge',
+        url: 'services/huawei_solar/forcible_charge',
         postData: {
           device_id: 'd36a4ede8885b40373c9b4d100e7f139',
           power: 0,
@@ -34,7 +34,7 @@ exports.default = () => ({
         },
       },
       forciblyDischargeCommand: {
-        url: 'huawei_solar/forcible_discharge',
+        url: 'services/huawei_solar/forcible_discharge',
         postData: {
           device_id: 'd36a4ede8885b40373c9b4d100e7f139',
           power: 0,
@@ -42,25 +42,27 @@ exports.default = () => ({
         },
       },
       stopForciblyChargeDischarge: {
-        url: 'huawei_solar/stop_forcible_charge',
+        url: 'services/huawei_solar/stop_forcible_charge',
         postData: {
           device_id: 'd36a4ede8885b40373c9b4d100e7f139',
         },
+      },
+      smartMeter: {
+        url: 'states',
+        consumptionEntityIds: [
+          'sensor.energy_consumed_tariff_1',
+          'sensor.energy_consumed_tariff_2',
+        ],
+        productionEntityIds: ['sensor.energy_produced_tariff_1', 'sensor.energy_produced_tariff_2'],
       },
     },
   },
   taskList: [
     {
       mode: 'charge',
-      from: '2023-10-13 05:00:00',
-      till: '2023-10-13 06:00:00',
+      from: '2023-10-14 14:00:00',
+      till: '2023-10-14 17:00:00',
       power: 2000,
-    },
-    {
-      mode: 'charge',
-      from: '2023-10-13 13:00:00',
-      till: '2023-10-13 15:00:00',
-      power: 3000,
     },
   ],
 })

@@ -1,7 +1,7 @@
 import * as Joi from 'Joi'
 
 export const HA_CKEY = 'homeAssistant'
-export const HA_SERVICE_CKY = 'servicesUrl'
+export const HA_SERVICE_CKEY = 'servicesUrl'
 export const HA_BASEURL_CKEY = 'baseUrl'
 export const HA_CMD_CKEY = 'commands'
 export const HA_BEARER_TOKEN_CKEY = 'bearerToken'
@@ -11,6 +11,10 @@ export const HA_DISCH_CMD_CKEY = 'forciblyDischargeCommand'
 export const BELPEX_CKEY = 'belpexSpot'
 export const BELPEX_URL_CKEY = 'url'
 export const BELPEX_PARAMS_CKEY = 'params'
+export const HA_SMART_METER_CKEY = 'smartMeter'
+export const HA_SMART_METER_URL_CKEY = 'url'
+export const HA_SMART_METER_CONS_IDS_CKEY = 'consumptionEntityIds'
+export const HA_SMART_METER_PROD_IDS_CKEY = 'productionEntityIds'
 
 const batteryConfigSchema = Joi.object({
   capacity: Joi.number().description('battery capacity in kWh'),
@@ -32,15 +36,22 @@ const homeAssistantCommand = stopCommandSchema.append({
   minutesToDurationMultiplier: Joi.number().default(1),
 })
 
+const smartMeterSchema = Joi.object({
+  [HA_SMART_METER_URL_CKEY]: Joi.string(),
+  [HA_SMART_METER_CONS_IDS_CKEY]: Joi.string(),
+  [HA_SMART_METER_PROD_IDS_CKEY]: Joi.string(),
+})
+
 const homeAssistantSchema = Joi.object({
   [HA_BASEURL_CKEY]: Joi.string().uri(),
-  [HA_SERVICE_CKY]: Joi.string(),
+  [HA_SERVICE_CKEY]: Joi.string(),
   [HA_BEARER_TOKEN_CKEY]: Joi.string(),
   [HA_CMD_CKEY]: Joi.object({
     [HA_CHARGE_CKEY]: homeAssistantCommand.required(),
     [HA_DISCH_CMD_CKEY]: homeAssistantCommand.required(),
     [HA_STOP_CMD_CKEY]: stopCommandSchema.required(),
   }),
+  [HA_SMART_METER_CKEY]: smartMeterSchema,
 })
 
 const chargeDischargeSchema = Joi.object({
