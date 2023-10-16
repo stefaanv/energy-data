@@ -1,7 +1,7 @@
 import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
 import { Injectable } from '@nestjs/common'
 import { SchedulerRegistry } from '@nestjs/schedule'
-import { BatteryConfig, ChargeSetting, ChargeTask } from './energy-actions/forcibly-charge'
+import { BatteryConfig, ChargeTaskSetting, ChargeTask } from './energy-actions/forcibly-charge'
 import { zonedTimeToUtc } from 'date-fns-tz'
 import { HomeAssistantCommuncationService } from './home-assistant-communication.service'
 
@@ -26,7 +26,7 @@ export class BatteryMonitorService {
 
   loadTaskListFromConfig() {
     console.log('reloading tasklist')
-    this._taskList = this._config.get<Array<ChargeSetting>>('taskList').map(task => {
+    this._taskList = this._config.get<Array<ChargeTaskSetting>>('taskList').map(task => {
       const from = zonedTimeToUtc(task.from, this._timeZone)
       const till = zonedTimeToUtc(task.till, this._timeZone)
       return new ChargeTask({ ...task, from, till })

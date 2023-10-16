@@ -12,7 +12,7 @@ export interface BatteryConfig {
 export type ChargeMode = 'charge' | 'discharge'
 export type PowerSettingType = 'absolute' | 'target'
 
-export interface ChargeSetting {
+export interface ChargeTaskSetting {
   mode: ChargeMode
   from: Date
   till: Date
@@ -28,7 +28,7 @@ export class ChargeTask {
   private readonly _powerLimit: number
   public commandSent: boolean
 
-  constructor(public readonly setting: ChargeSetting) {
+  constructor(public readonly setting: ChargeTaskSetting) {
     const config = ChargeTask.config
     this._target = !setting.target
       ? undefined

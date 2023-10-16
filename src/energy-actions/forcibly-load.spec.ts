@@ -1,11 +1,11 @@
-import { BatteryConfig, ChargeSetting, ChargeTask } from './forcibly-charge'
+import { BatteryConfig, ChargeTaskSetting, ChargeTask } from './forcibly-charge'
 import { parse } from 'date-fns'
 
 describe('forcibly charge tests - absolute power', () => {
   let fc: ChargeTask
   let from: Date
   let till: Date
-  let setting: ChargeSetting
+  let setting: ChargeTaskSetting
 
   beforeEach(() => {
     ChargeTask.config = {
