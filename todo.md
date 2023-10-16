@@ -1,1 +1,2 @@
 - forciblies loggen
+- Waarom werkt autom. ernieuwen van config plots niet meer ?  Wegens `npm install` ?

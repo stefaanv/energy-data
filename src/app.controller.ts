@@ -2,11 +2,12 @@ import { Controller, Get, Inject, Param } from '@nestjs/common'
 import { AppService } from './app.service'
 import { HomeAssistantCommuncationService } from './home-assistant-communication.service'
 import { PricingService } from './pricing.service'
-import { EntityManager, EntityRepository, MikroORM } from '@mikro-orm/core'
-import { Index } from './entities/index.entity'
+import { EntityManager } from '@mikro-orm/core'
 import { subDays } from 'date-fns'
 import { IndexValue } from './entities/index-value.entity'
 import { format } from 'date-fns-tz'
+import { BatteryMonitorService } from './battery-monitor.service'
+import { ForciblyCharge } from './energy-actions/forcibly-charge'
 
 @Controller()
 export class AppController {
@@ -14,19 +15,9 @@ export class AppController {
     private readonly _appService: AppService,
     private readonly _haCommService: HomeAssistantCommuncationService,
     private readonly _pricingService: PricingService,
+    private readonly _batteryMonitorService: BatteryMonitorService,
     private readonly _em: EntityManager,
   ) {}
-
-  @Get()
-  getHello(): string {
-    return this._appService.getHello()
-  }
-
-  @Get('start')
-  start(): string {
-    this._haCommService.startForcibly(4500, 10)
-    return 'forcibly charge started'
-  }
 
   @Get('stop')
   stop(): string {
@@ -51,11 +42,16 @@ export class AppController {
     return this._appService.getConfig()
   }
 
+  @Get('tasks')
+  getTasks() {
+    return tasksAsTable(this._batteryMonitorService.tasks)
+  }
+
   @Get('belpex')
   async getBelpex() {
     const twoDaysAgo = subDays(new Date(), 2)
     const json = await this._pricingService.getBelpexSince(twoDaysAgo)
-    const ashtml = asTable(json)
+    const ashtml = indexAsTable(json)
     return ashtml
   }
 
@@ -66,13 +62,27 @@ export class AppController {
   }
 }
 
-function asTable(values: IndexValue[]) {
+function indexAsTable(values: IndexValue[]) {
   return (
     '<table><tr><th>startTime</th><th>value</th></tr>' +
     values
       .map(v => {
         const fTime = format(v.startTime, 'd/MM HH:mm', { timeZone: 'Europe/Brussels' })
         return `<tr><td>${fTime}</td><td>${v.price}</td></tr>`
+      })
+      .join('') +
+    '</table>'
+  )
+}
+
+function tasksAsTable(tasks: ForciblyCharge[]) {
+  return (
+    '<h1>Tasks</h1><table><tr><th>start</th><th>einde</th><th>mode</th><th>vermogen</th></tr>' +
+    tasks
+      .map(t => {
+        const fTime = format(t.setting.from, 'd/MM HH:mm', { timeZone: 'Europe/Brussels' })
+        const tTime = format(t.setting.till, 'd/MM HH:mm', { timeZone: 'Europe/Brussels' })
+        return `<tr><td>${fTime}</td><td>${tTime}</td><td>${t.setting.mode}</td><td>${t.setting.power}</td></tr>`
       })
       .join('') +
     '</table>'

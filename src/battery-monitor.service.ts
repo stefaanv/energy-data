@@ -33,6 +33,10 @@ export class BatteryMonitorService {
     })
   }
 
+  get tasks() {
+    return this._taskList
+  }
+
   monitor() {
     const now = new Date()
     // console.log(format(now, 'HH:mm:ss'))

@@ -6,13 +6,16 @@ import { commandRootQuestions } from './inquirer-questions/command-root'
 import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
 import { emitKeypressEvents } from 'readline'
 import { LoggerService } from './logger.service'
+import { getPort } from 'get-port-please'
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+const START_PORT = 3000
 
 async function bootstrap() {
   // set up the application and logging
   const logger = new LoggerService('main')
   const app = await NestFactory.create(AppModule, { logger })
+  app.setGlobalPrefix('api')
 
   // get some configuration items
   const config = app.get(ConfigService)
@@ -22,7 +25,9 @@ async function bootstrap() {
   // if (activateKeyWatcher) setKeyWatcher()
 
   // Start listening for REST API calls
-  app.listen(3000)
+  const port = await getPort({ portRange: [3000, 3010] })
+  app.listen(port)
+  logger.log(`Listening on port ${port}`)
 
   // // de/re-activate the keywatcher if config is altered
   // config.on('reloaded', () => {
