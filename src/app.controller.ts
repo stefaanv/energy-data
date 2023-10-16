@@ -7,7 +7,7 @@ import { subDays } from 'date-fns'
 import { IndexValue } from './entities/index-value.entity'
 import { format } from 'date-fns-tz'
 import { BatteryMonitorService } from './battery-monitor.service'
-import { ForciblyCharge } from './energy-actions/forcibly-charge'
+import { ChargeTask } from './energy-actions/forcibly-charge'
 
 @Controller()
 export class AppController {
@@ -75,7 +75,7 @@ function indexAsTable(values: IndexValue[]) {
   )
 }
 
-function tasksAsTable(tasks: ForciblyCharge[]) {
+function tasksAsTable(tasks: ChargeTask[]) {
   return (
     '<h1>Tasks</h1><table><tr><th>start</th><th>einde</th><th>mode</th><th>vermogen</th></tr>' +
     tasks
