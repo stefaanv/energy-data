@@ -12,7 +12,7 @@ export interface BatteryConfig {
 export type ChargeMode = 'charge' | 'discharge'
 export type PowerSettingType = 'absolute' | 'target'
 
-export interface ChargeSetting {
+export interface ChargeTaskSetting {
   mode: ChargeMode
   from: Date
   till: Date
@@ -21,15 +21,15 @@ export interface ChargeSetting {
   holdOff?: Percentage
 }
 
-export class ForciblyCharge {
+export class ChargeTask {
   static config: BatteryConfig
   public readonly _power: number
   public readonly _target?: number
   private readonly _powerLimit: number
   public commandSent: boolean
 
-  constructor(public readonly setting: ChargeSetting) {
-    const config = ForciblyCharge.config
+  constructor(public readonly setting: ChargeTaskSetting) {
+    const config = ChargeTask.config
     this._target = !setting.target
       ? undefined
       : Math.min(Math.max(setting.target ?? 0, config.lowerSocLimit), config.upperSocLimit)
@@ -73,7 +73,7 @@ export class ForciblyCharge {
     }
 
     const socDifference = this._target - currentSOC
-    const energy = socDifference * ForciblyCharge.config.capacity * 10
+    const energy = socDifference * ChargeTask.config.capacity * 10
     const power = energy / this.periodInHours
     return setting.mode === 'charge'
       ? Math.min(power, this._powerLimit)
