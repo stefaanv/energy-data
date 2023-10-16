@@ -21,7 +21,7 @@ export interface ChargeSetting {
   holdOff?: Percentage
 }
 
-export class ForciblyCharge {
+export class ChargeTask {
   static config: BatteryConfig
   public readonly _power: number
   public readonly _target?: number
@@ -29,7 +29,7 @@ export class ForciblyCharge {
   public commandSent: boolean
 
   constructor(public readonly setting: ChargeSetting) {
-    const config = ForciblyCharge.config
+    const config = ChargeTask.config
     this._target = !setting.target
       ? undefined
       : Math.min(Math.max(setting.target ?? 0, config.lowerSocLimit), config.upperSocLimit)
@@ -73,7 +73,7 @@ export class ForciblyCharge {
     }
 
     const socDifference = this._target - currentSOC
-    const energy = socDifference * ForciblyCharge.config.capacity * 10
+    const energy = socDifference * ChargeTask.config.capacity * 10
     const power = energy / this.periodInHours
     return setting.mode === 'charge'
       ? Math.min(power, this._powerLimit)
