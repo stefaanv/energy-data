@@ -57,12 +57,5 @@ exports.default = () => ({
       },
     },
   },
-  taskList: [
-    {
-      mode: 'charge',
-      from: '2023-10-14 14:00:00',
-      till: '2023-10-14 17:00:00',
-      power: 2000,
-    },
-  ],
+  taskList: [],
 })

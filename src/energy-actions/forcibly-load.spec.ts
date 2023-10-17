@@ -1,4 +1,4 @@
-import { BatteryConfig, ChargeTaskSetting, ChargeTask } from './forcibly-charge'
+import { BatteryConfig, ChargeTaskSetting, ChargeTask } from './charge-task'
 import { parse } from 'date-fns'
 
 describe('forcibly charge tests - absolute power', () => {

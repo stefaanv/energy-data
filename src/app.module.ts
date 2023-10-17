@@ -11,6 +11,8 @@ import { PricingService } from './pricing.service'
 import { MikroOrmModule } from '@mikro-orm/nestjs'
 import { ServeStaticModule } from '@nestjs/serve-static'
 import { resolve } from 'path'
+import { EnergyController } from './energy.controller'
+import { EnergyService } from './energy.service'
 
 // Db tables updaten: https://mikro-orm.io/docs/schema-generator
 //npx mikro-orm schema:update --run (werkt niet !)
@@ -38,13 +40,14 @@ console.log('clientPath', clientPath)
       rootPath: clientPath,
     }),
   ],
-  controllers: [AppController],
+  controllers: [AppController, EnergyController],
   providers: [
     AppService,
     LoggerService,
     BatteryMonitorService,
     HomeAssistantCommuncationService,
     PricingService,
+    EnergyService,
   ],
   exports: [LoggerService, ConfigModule],
 })

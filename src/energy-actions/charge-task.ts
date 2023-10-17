@@ -1,5 +1,5 @@
-import { differenceInMinutes, isBefore } from 'date-fns'
-import { Percentage } from 'src/helpers'
+import { ChargeTask as ChargeTaskSetting } from '../shared-models/charge-task.model'
+import { isDate } from 'radash'
 
 export interface BatteryConfig {
   /** in kWh */ capacity: number
@@ -7,18 +7,6 @@ export interface BatteryConfig {
   /** in Watt */ maxDischargePower: number
   /** in % */ lowerSocLimit: number
   /** in % */ upperSocLimit: number
-}
-
-export type ChargeMode = 'charge' | 'discharge'
-export type PowerSettingType = 'absolute' | 'target'
-
-export interface ChargeTaskSetting {
-  mode: ChargeMode
-  from: Date
-  till: Date
-  power: number
-  target?: number
-  holdOff?: Percentage
 }
 
 export class ChargeTask {
@@ -37,13 +25,14 @@ export class ChargeTask {
     this._power = Math.max(0, Math.min(setting.power, this._powerLimit))
     this.commandSent = false
 
-    if (!isBefore(setting.from, setting.till)) throw new Error('from must be before till')
+    if (setting.from >= setting.till) throw new Error('from must be before till')
   }
 
   get periodInMinutes() {
     const now = new Date()
-    const startTime = this.isWithinPeriod(now) ? now : this.setting.from
-    return differenceInMinutes(this.setting.till, startTime)
+    const timeNow = now.getHours() / 24 + now.getMinutes() / 24 / 60
+    const startTime = this.isWithinPeriod(timeNow) ? timeNow : this.setting.from
+    return (this.setting.till - startTime) * 60 * 24
   }
 
   get periodInHours() {
@@ -80,8 +69,9 @@ export class ChargeTask {
       : Math.max(power, -this._powerLimit)
   }
 
-  isWithinPeriod(time: Date) {
-    return isBefore(this.setting.from, time) && isBefore(time, this.setting.till)
+  isWithinPeriod(time: Date | number) {
+    const timePart = isDate(time) ? time.getHours() / 24 + time.getMinutes() / 24 / 60 : time
+    return this.setting.from < timePart && timePart < this.setting.till
   }
 
   get power() {

@@ -7,7 +7,7 @@ import { subDays } from 'date-fns'
 import { IndexValue } from './entities/index-value.entity'
 import { format } from 'date-fns-tz'
 import { BatteryMonitorService } from './battery-monitor.service'
-import { ChargeTask } from './energy-actions/forcibly-charge'
+import { ChargeTask } from './energy-actions/charge-task'
 
 @Controller()
 export class AppController {
