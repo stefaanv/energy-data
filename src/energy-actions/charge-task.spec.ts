@@ -1,12 +1,13 @@
 import { BatteryConfig, ChargeTask } from './charge-task.class'
 import { parse } from 'date-fns'
+import { IChargeTask } from './charge-task.interface'
 
-/*
 describe('forcibly charge tests - absolute power', () => {
   let fc: ChargeTask
   let from: Date
   let till: Date
-  let setting: ChargeTaskSetting
+  let setting: IChargeTask
+  let now = new Date(2023, 9, 18, 8, 0, 0)
 
   beforeEach(() => {
     ChargeTask.config = {
@@ -16,9 +17,9 @@ describe('forcibly charge tests - absolute power', () => {
       lowerSocLimit: 11,
       upperSocLimit: 100,
     }
-    from = parse('10:30', 'HH:mm', new Date())
-    till = parse('11:00', 'HH:mm', new Date())
-    setting = { mode: 'charge', from, till, power: 5000 }
+    from = parse('10:30', 'HH:mm', now)
+    till = parse('11:00', 'HH:mm', now)
+    setting = { id: 1, mode: 'charge', from, till, power: 5000 }
     fc = new ChargeTask(setting)
   })
 
@@ -57,16 +58,25 @@ describe('forcibly charge tests - absolute power', () => {
 
   describe('Period length calculation', () => {
     it('10:30 - 11:00 is 30 minutes', () => {
-      expect(fc.periodInMinutes).toBeCloseTo(30)
+      expect(fc.periodInMinutes(now)).toBeCloseTo(30)
     })
     it('10:30 - 11:00 is 1/2 hours', () => {
-      expect(fc.periodInHours).toBeCloseTo(0.5)
+      expect(fc.periodInHours(now)).toBeCloseTo(0.5)
     })
     it('0:30 - 23:15 is 22:15 hours', () => {
-      setting.from = parse('0:30', 'HH:mm', new Date())
-      setting.till = parse('22:15', 'HH:mm', new Date())
+      now = new Date(2023, 9, 18, 0, 0, 0)
+      setting.from = parse('0:30', 'HH:mm', now)
+      setting.till = parse('22:15', 'HH:mm', now)
       fc = new ChargeTask(setting)
-      expect(fc.periodInHours).toBeCloseTo(21.75)
+      expect(fc.periodInHours(now)).toBeCloseTo(21.75)
+    })
+
+    it('0:30 - 23:15, now is noon is 11:15 hours', () => {
+      now = new Date(2023, 9, 18, 12, 0, 0)
+      setting.from = parse('0:30', 'HH:mm', now)
+      setting.till = parse('22:15', 'HH:mm', now)
+      fc = new ChargeTask(setting)
+      expect(fc.periodInHours(now)).toBeCloseTo(10.25)
     })
   })
 
@@ -194,4 +204,3 @@ describe('forcibly charge tests - absolute power', () => {
     })
   })
 })
-*/

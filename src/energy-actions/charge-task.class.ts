@@ -1,3 +1,4 @@
+import { differenceInMinutes, isBefore } from 'date-fns'
 import { IChargeTask } from './charge-task.interface'
 import { isDate } from 'radash'
 
@@ -29,22 +30,20 @@ export class ChargeTask {
     if (setting.from >= setting.till) throw new Error('from must be before till')
   }
 
-  get periodInMinutes() {
-    const now = new Date()
-    const timeNow = now.getHours() / 24 + now.getMinutes() / 24 / 60
-    const startTime = this.isWithinPeriod(timeNow) ? timeNow : this.setting.from
-    // return (this.setting.till - startTime) * 60 * 24
-    return 0
+  periodInMinutes(now = new Date()) {
+    const nowIsWithin = isBefore(this.setting.from, now) && isBefore(now, this.setting.till)
+    const startTime = nowIsWithin ? now : this.setting.from
+    return differenceInMinutes(this.setting.till, startTime)
   }
 
-  get periodInHours() {
-    return this.periodInMinutes / 60.0
+  periodInHours(now = new Date()) {
+    return this.periodInMinutes(now) / 60.0
   }
 
   /**
    * @param currentSOC percentage (0-100) of
    */
-  calcPower(currentSOC: number): number | undefined {
+  calcPower(currentSOC: number, now = new Date()): number | undefined {
     const setting = this.setting
     // Target gedefinieerd
     // Niets doen wanneer het target al overschreden is
@@ -65,7 +64,7 @@ export class ChargeTask {
 
     const socDifference = this._target - currentSOC
     const energy = socDifference * ChargeTask.config.capacity * 10
-    const power = energy / this.periodInHours
+    const power = energy / this.periodInHours(now)
     return setting.mode === 'charge'
       ? Math.min(power, this._powerLimit)
       : Math.max(power, -this._powerLimit)

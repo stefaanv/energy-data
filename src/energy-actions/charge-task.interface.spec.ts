@@ -1,5 +1,6 @@
 import { differenceInDays } from 'date-fns'
-import { IChargeTaskWire, chargeTaskFromWire, relDate } from './charge-task.interface'
+import { chargeTaskFromWire, relDate } from './charge-task.interface'
+import { IChargeTaskWire, dateRel } from '../shared-models/charge-task.wire.interface'
 
 describe('convert charge task from wire', () => {
   let fromWire: IChargeTaskWire
@@ -51,5 +52,24 @@ describe('relDate function', () => {
     now = new Date(2023, 9, 18, 0, 0, 0)
     const refDate = new Date(2023, 9, 19, 0, 0, 0) // 23:13
     expect(relDate(refDate, now)).toBeCloseTo(1)
+  })
+})
+
+describe('FrontEnd Interface', () => {
+  it('1', () => {
+    const now = new Date('2023-10-18T16:13:52.096Z') // 18:13
+    expect(dateRel(1, '10', '30', now).toLocaleString()).toBe('19/10/2023 10:30:00')
+  })
+  it('2', () => {
+    const now = new Date(2023, 9, 18, 0, 0, 0)
+    expect(dateRel(0, '03', '00', now).toLocaleString()).toBe('18/10/2023 03:00:00')
+  })
+  it('3', () => {
+    const now = new Date(2023, 9, 18, 23, 59, 0)
+    expect(dateRel(1, '03', '00', now).toLocaleString()).toBe('19/10/2023 03:00:00')
+  })
+  it('3', () => {
+    const now = new Date(2023, 9, 18, 23, 59, 0)
+    expect(dateRel(0, '01', '00', now).toLocaleString()).toBe('18/10/2023 01:00:00')
   })
 })
