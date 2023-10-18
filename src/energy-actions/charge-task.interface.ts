@@ -1,4 +1,11 @@
-import { addDays, addSeconds, getTime, parseISO } from 'date-fns'
+import {
+  addDays,
+  addSeconds,
+  differenceInCalendarDays,
+  differenceInDays,
+  getTime,
+  parseISO,
+} from 'date-fns'
 import { omit } from 'radash'
 
 export type ChargeMode = 'charge' | 'discharge'
@@ -30,13 +37,13 @@ export function chargeTaskFromWire(value: IChargeTaskWire): IChargeTask {
   }
 }
 
-function secondsInDay(value: Date) {
-  return value.getHours() * 3600 + value.getMinutes() * 60 + value.getSeconds()
-}
-
 function splitDate(value: Date) {
   const split = value.toISOString().split('T')
   if (split.length != 2) throw new Error(`${value} is not a valid ISO date`)
+}
+
+export function relDate(value: Date, now = new Date()) {
+  return differenceInCalendarDays(value, now)
 }
 
 function datePart(value: Date) {
