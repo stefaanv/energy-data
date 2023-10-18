@@ -7,7 +7,7 @@ import { subDays } from 'date-fns'
 import { IndexValue } from './entities/index-value.entity'
 import { format } from 'date-fns-tz'
 import { BatteryMonitorService } from './battery-monitor.service'
-import { ChargeTask } from './energy-actions/charge-task'
+import { ChargeTask } from './energy-actions/charge-task.class'
 
 @Controller()
 export class AppController {
@@ -77,12 +77,14 @@ function indexAsTable(values: IndexValue[]) {
 
 function tasksAsTable(tasks: ChargeTask[]) {
   return (
-    '<h1>Tasks</h1><table><tr><th>start</th><th>einde</th><th>mode</th><th>vermogen</th></tr>' +
+    '<h1>Tasks</h1>' +
+    '<table><tr><th>dag</th><th>start</th><th>einde</th><th>mode</th><th>vermogen</th></tr>' +
     tasks
       .map(t => {
-        const fTime = format(t.setting.from, 'd/MM HH:mm', { timeZone: 'Europe/Brussels' })
-        const tTime = format(t.setting.till, 'd/MM HH:mm', { timeZone: 'Europe/Brussels' })
-        return `<tr><td>${fTime}</td><td>${tTime}</td><td>${t.setting.mode}</td><td>${t.setting.power}</td></tr>`
+        return (
+          `<tr><td>${t.setting.from.toString()}</td><td>${t.setting.till.toString()}` +
+          `</td><td>${t.setting.mode}</td><td>${t.setting.power}</td></tr>`
+        )
       })
       .join('') +
     '</table>'

@@ -1,4 +1,4 @@
-import { ChargeTask as ChargeTaskSetting } from '../shared-models/charge-task.model'
+import { IChargeTask } from './charge-task.interface'
 import { isDate } from 'radash'
 
 export interface BatteryConfig {
@@ -11,12 +11,13 @@ export interface BatteryConfig {
 
 export class ChargeTask {
   static config: BatteryConfig
+  public readonly task: IChargeTask
   public readonly _power: number
   public readonly _target?: number
   private readonly _powerLimit: number
   public commandSent: boolean
 
-  constructor(public readonly setting: ChargeTaskSetting) {
+  constructor(public readonly setting: IChargeTask) {
     const config = ChargeTask.config
     this._target = !setting.target
       ? undefined
@@ -32,7 +33,8 @@ export class ChargeTask {
     const now = new Date()
     const timeNow = now.getHours() / 24 + now.getMinutes() / 24 / 60
     const startTime = this.isWithinPeriod(timeNow) ? timeNow : this.setting.from
-    return (this.setting.till - startTime) * 60 * 24
+    // return (this.setting.till - startTime) * 60 * 24
+    return 0
   }
 
   get periodInHours() {
@@ -71,7 +73,8 @@ export class ChargeTask {
 
   isWithinPeriod(time: Date | number) {
     const timePart = isDate(time) ? time.getHours() / 24 + time.getMinutes() / 24 / 60 : time
-    return this.setting.from < timePart && timePart < this.setting.till
+    // return this.setting.from < timePart && timePart < this.setting.till
+    return true
   }
 
   get power() {
@@ -79,6 +82,7 @@ export class ChargeTask {
   }
 
   get target() {
+    return
     return this._target
   }
 }

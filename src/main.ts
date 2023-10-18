@@ -17,9 +17,6 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { logger })
   app.setGlobalPrefix('api')
 
-  // get some configuration items
-  const config = app.get(ConfigService)
-
   // // Activate the command console (if needed)
   // const activateKeyWatcher = config.get('activateCommandKeyWatcher', false)
   // if (activateKeyWatcher) setKeyWatcher()
