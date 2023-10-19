@@ -6,7 +6,7 @@ import { EntityManager } from '@mikro-orm/core'
 import { subDays } from 'date-fns'
 import { IndexValue } from './entities/index-value.entity'
 import { format } from 'date-fns-tz'
-import { BatteryMonitorService } from './battery-monitor.service'
+import { EnergyService } from './energy-actions/energy.service'
 import { ChargeTask } from './energy-actions/charge-task.class'
 
 @Controller()
@@ -15,7 +15,7 @@ export class AppController {
     private readonly _appService: AppService,
     private readonly _haCommService: HomeAssistantCommuncationService,
     private readonly _pricingService: PricingService,
-    private readonly _batteryMonitorService: BatteryMonitorService,
+    private readonly _energyService: EnergyService,
     private readonly _em: EntityManager,
   ) {}
 
@@ -40,11 +40,6 @@ export class AppController {
   @Get('config')
   getConfig() {
     return this._appService.getConfig()
-  }
-
-  @Get('tasks')
-  getTasks() {
-    return tasksAsTable(this._batteryMonitorService.tasks)
   }
 
   @Get('belpex')

@@ -5,7 +5,7 @@ import { differenceInDays } from 'date-fns'
 import { OptionsWithTZ, format } from 'date-fns-tz'
 
 @Injectable()
-export class EnergyService {
+export class EnergyServiceOld {
   // private _chargeTasks: ChargeTask[]
   private _tzOptions: OptionsWithTZ
 

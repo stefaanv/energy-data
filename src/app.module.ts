@@ -4,15 +4,14 @@ import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { configValidationSchema } from './config-validator.joi'
 import { LoggerService } from './logger.service'
-import { BatteryMonitorService } from './battery-monitor.service'
 import { ScheduleModule } from '@nestjs/schedule'
 import { HomeAssistantCommuncationService } from './home-assistant-communication.service'
 import { PricingService } from './pricing.service'
 import { MikroOrmModule } from '@mikro-orm/nestjs'
 import { ServeStaticModule } from '@nestjs/serve-static'
 import { resolve } from 'path'
-import { EnergyController } from './energy.controller'
-import { EnergyService } from './energy.service'
+import { EnergyController } from './energy-actions/energy.controller'
+import { EnergyService } from './energy-actions/energy.service'
 
 // Db tables updaten: https://mikro-orm.io/docs/schema-generator
 //npx mikro-orm schema:update --run (werkt niet !)
@@ -44,7 +43,6 @@ console.log('clientPath', clientPath)
   providers: [
     AppService,
     LoggerService,
-    BatteryMonitorService,
     HomeAssistantCommuncationService,
     PricingService,
     EnergyService,

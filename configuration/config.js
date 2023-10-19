@@ -1,3 +1,7 @@
+const { parse } = require('date-fns')
+const DT_FORMAT = 'dd/MM/yyyy HH:mm'
+const now = new Date()
+
 exports.default = () => ({
   activateCommandKeyWatcher: false,
   batteryMonitorInterval: 10,
@@ -57,5 +61,18 @@ exports.default = () => ({
       },
     },
   },
-  taskList: [],
+  taskList: [
+    {
+      mode: 'charge',
+      from: parse('18/10/2023 10:00', DT_FORMAT, now),
+      till: parse('18/10/2023 11:00', DT_FORMAT, now),
+      power: 2000,
+    },
+    {
+      mode: 'discharge',
+      from: parse('18/10/2023 14:00', DT_FORMAT, now),
+      till: parse('18/10/2023 15:00', DT_FORMAT, now),
+      power: 1800,
+    },
+  ],
 })
