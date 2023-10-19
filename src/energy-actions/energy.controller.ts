@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Put } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Inject, Param, Post, Put } from '@nestjs/common'
 import { IChargeTask } from './charge-task.interface'
 import { EnergyService } from './energy.service'
 import { IChargeTaskWire, chargeTaskFromWire } from '../shared-models/charge-task-wire.interface'
@@ -16,5 +16,16 @@ export class EnergyController {
   async addEnergyTask(@Body() newTask: IChargeTaskWire) {
     const t = chargeTaskFromWire(newTask)
     this._service.addTask(t)
+  }
+
+  @Post('tasks/:id')
+  async updateEnergyTask(@Body() task: IChargeTaskWire, @Param('id') id: number) {
+    const t = chargeTaskFromWire(task)
+    this._service.updateTask(t, id)
+  }
+
+  @Delete('tasks/:id')
+  async deleteEnergyTask(@Param('id') id: string) {
+    this._service.deleteTask(parseInt(id))
   }
 }

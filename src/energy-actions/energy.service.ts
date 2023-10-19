@@ -1,11 +1,12 @@
 import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
-import { Injectable } from '@nestjs/common'
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import { SchedulerRegistry } from '@nestjs/schedule'
 import { BatteryConfig, ChargeTask } from './charge-task.class'
 import { HomeAssistantCommuncationService } from '../home-assistant-communication.service'
 import { assign, max, sort } from 'radash'
 import { IChargeTask, chargeTaskSettingToString } from './charge-task.interface'
 import { IChargeTaskWire } from 'src/shared-models/charge-task-wire.interface'
+import { findIndex } from 'rxjs'
 
 @Injectable()
 export class EnergyService {
@@ -65,6 +66,28 @@ export class EnergyService {
   addTask(newTask: IChargeTask) {
     newTask.id = max(this._taskList.map(tl => tl.setting.id)) + 1
     this._taskList.push(new ChargeTask(newTask))
+    this.printTaskList()
+  }
+
+  updateTask(task: IChargeTask, id: number) {
+    const taskToUpdate = this._taskList.find(t => t.setting.id == id)
+    if (!taskToUpdate) {
+      const msg = `task with id=${id} does not exist`
+      throw new HttpException(msg, HttpStatus.NOT_FOUND)
+    }
+    task.id = taskToUpdate.setting.id
+    taskToUpdate.setting = task
+    this.printTaskList()
+  }
+
+  deleteTask(id: number) {
+    const index = this._taskList.map(tl => tl.setting).findIndex(s => s.id === id)
+    if (index < 0) {
+      const msg = `task with id=${id} does not exist`
+      throw new HttpException(msg, HttpStatus.NOT_FOUND)
+    }
+
+    this._taskList.splice(index, 1)
     this.printTaskList()
   }
 

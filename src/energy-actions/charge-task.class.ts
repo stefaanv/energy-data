@@ -12,13 +12,12 @@ export interface BatteryConfig {
 
 export class ChargeTask {
   static config: BatteryConfig
-  public readonly task: IChargeTask
   public readonly _power: number
   public readonly _target?: number
   private readonly _powerLimit: number
   public commandSent: boolean
 
-  constructor(public readonly setting: IChargeTask) {
+  constructor(public setting: IChargeTask) {
     const config = ChargeTask.config
     this._target = !setting.target
       ? undefined
