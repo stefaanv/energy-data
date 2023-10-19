@@ -1,4 +1,4 @@
-import { BatteryConfig, ChargeTask } from './charge-task.class'
+import { ChargeTask } from './charge-task.class'
 import { parse } from 'date-fns'
 import { IChargeTask } from './charge-task.interface'
 
@@ -82,7 +82,7 @@ describe('forcibly charge tests - absolute power', () => {
 
   describe('Calculate power from target', () => {
     it('80% to 100% in 1h => 2kW charge', () => {
-      setting.till = parse('11:30', 'HH:mm', new Date())
+      setting.till = parse('11:30', 'HH:mm', now)
       setting.target = 100
       fc = new ChargeTask(setting)
       expect(fc.calcPower(80)).toBeCloseTo(2000)
@@ -93,20 +93,20 @@ describe('forcibly charge tests - absolute power', () => {
       expect(fc.calcPower(80)).toBeCloseTo(4000)
     })
     it('60% to 100% in 1h => 4kW charge', () => {
-      setting.till = parse('11:30', 'HH:mm', new Date())
+      setting.till = parse('11:30', 'HH:mm', now)
       setting.target = 100
       fc = new ChargeTask(setting)
       expect(fc.calcPower(60)).toBeCloseTo(4000)
     })
     it('60% to 10% in 2h => 2,5kW discharge', () => {
-      setting.till = parse('12:30', 'HH:mm', new Date())
+      setting.till = parse('12:30', 'HH:mm', now)
       setting.target = 20
       setting.mode = 'discharge'
       fc = new ChargeTask(setting)
       expect(fc.calcPower(60)).toBeCloseTo(-2000)
     })
     it('charge 60% to 50% = no charging', () => {
-      setting.till = parse('12:30', 'HH:mm', new Date())
+      setting.till = parse('12:30', 'HH:mm', now)
       setting.target = 50
       fc = new ChargeTask(setting)
       expect(fc.calcPower(60)).toBeUndefined()
@@ -170,7 +170,7 @@ describe('forcibly charge tests - absolute power', () => {
 
   describe('Battery limits', () => {
     beforeEach(() => {
-      setting.from = parse('10:00', 'HH:mm', new Date())
+      setting.from = parse('10:00', 'HH:mm', now)
     })
 
     it('upper charge limit 50%', () => {
