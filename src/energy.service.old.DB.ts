@@ -1,6 +1,6 @@
 import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
 import { Injectable } from '@nestjs/common'
-import { IChargeTask as FeChargeTask } from './energy-actions/charge-task.interface'
+import { IChargeTask as FeChargeTask } from './shared-models/charge-task.interface'
 import { differenceInDays } from 'date-fns'
 import { OptionsWithTZ, format } from 'date-fns-tz'
 

@@ -1,5 +1,5 @@
 import { differenceInMinutes, isBefore } from 'date-fns'
-import { IChargeTask } from './charge-task.interface'
+import { IChargeTask } from '../shared-models/charge-task.interface'
 import { isDate } from 'radash'
 
 export interface BatteryConfig {

@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Inject, Param, Post, Put } from '@nestjs/common'
-import { IChargeTask } from './charge-task.interface'
+import { IChargeTask } from '../shared-models/charge-task.interface'
 import { EnergyService } from './energy.service'
 import { IChargeTaskWire, chargeTaskFromWire } from '../shared-models/charge-task-wire.interface'
 

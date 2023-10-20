@@ -1,6 +1,6 @@
 import { ChargeTask } from './charge-task.class'
 import { parse } from 'date-fns'
-import { IChargeTask } from './charge-task.interface'
+import { IChargeTask } from '../shared-models/charge-task.interface'
 
 describe('forcibly charge tests - absolute power', () => {
   let fc: ChargeTask

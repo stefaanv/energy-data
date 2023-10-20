@@ -4,7 +4,7 @@ import { SchedulerRegistry } from '@nestjs/schedule'
 import { BatteryConfig, ChargeTask } from './charge-task.class'
 import { HomeAssistantCommuncationService } from '../home-assistant-communication.service'
 import { assign, max, sort } from 'radash'
-import { IChargeTask, chargeTaskSettingToString } from './charge-task.interface'
+import { IChargeTask, chargeTaskSettingToString } from '../shared-models/charge-task.interface'
 import { IChargeTaskWire } from 'src/shared-models/charge-task-wire.interface'
 import { findIndex } from 'rxjs'
 
