@@ -4,7 +4,6 @@
 .env
 .env.*
 db/sqlite.db
-src/shared-models
 
 
 # Logs
