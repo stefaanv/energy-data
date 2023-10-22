@@ -48,7 +48,7 @@ export class EnergyService {
     if (this._taskList.length === 0) {
       console.log('tasklist is empty')
     } else {
-      console.log('current tasklist')
+      console.log('\ncurrent tasklist')
       console.log('================')
       sort(
         this._taskList.map(tl => tl.setting),
@@ -68,6 +68,7 @@ export class EnergyService {
     newTask.id = max(this._taskList.map(tl => tl.setting.id)) + 1
     this._taskList.push(new ChargeTask(newTask))
     this.printTaskList()
+    return newTask.id
   }
 
   updateTask(task: IChargeTask, id: number) {
