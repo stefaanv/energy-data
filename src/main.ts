@@ -16,6 +16,7 @@ async function bootstrap() {
   const logger = new LoggerService('main')
   const app = await NestFactory.create(AppModule, { logger })
   app.setGlobalPrefix('api')
+  app.enableCors()
 
   // // Activate the command console (if needed)
   // const activateKeyWatcher = config.get('activateCommandKeyWatcher', false)
