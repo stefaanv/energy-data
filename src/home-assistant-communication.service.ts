@@ -31,6 +31,7 @@ export class HomeAssistantCommuncationService {
   private readonly _haStopChargeConfig: CmdConfigBase
   private readonly _haForciblyChargeConfig: ChgCmdConfig
   private readonly _haForciblyDischargeConfig: ChgCmdConfig
+  private readonly _dryRunProxy: () => boolean
 
   constructor(
     config: ConfigService,
@@ -45,19 +46,29 @@ export class HomeAssistantCommuncationService {
     this._haStopChargeConfig = config.get<CmdConfigBase>([...cmdPrefix, HA_STOP_CMD_CKEY])
     this._haForciblyChargeConfig = config.get<ChgCmdConfig>([...cmdPrefix, HA_CHARGE_CKEY])
     this._haForciblyDischargeConfig = config.get<ChgCmdConfig>([...cmdPrefix, HA_DISCH_CMD_CKEY])
+    this._dryRunProxy = config.createProxy('')
   }
 
   async stopForciblyCharge() {
+    if (this._dryRunProxy()) {
+      this._log.warn(`dryRun active - not stopping`)
+      return
+    }
     const config = this._haStopChargeConfig
     const url = this._baseUrl + '/' + config.url
     try {
-      const result = await axios.post(url, config.postData, this._axiosOptions)
+      await axios.post(url, config.postData, this._axiosOptions)
     } catch (error) {
       console.log(error)
     }
   }
 
   async startForcibly(/** in Watt */ power: number, /** in minutes */ time: number) {
+    if (this._dryRunProxy()) {
+      this._log.warn(`dryRun active - not starting`)
+      return
+    }
+
     const config = power > 0 ? this._haForciblyChargeConfig : this._haForciblyDischargeConfig
     const url = config.url //joinUrlParts(this._baseUrl, config.url)
     const postData = config.postData
@@ -66,7 +77,7 @@ export class HomeAssistantCommuncationService {
     const periodInMin = time * config.minutesToDurationMultiplier
     postData[config.durationKey] = periodInMin
     try {
-      const result = await axios.post(url, config.postData, this._axiosOptions)
+      await axios.post(url, config.postData, this._axiosOptions)
       const mode = power > 0 ? '' : 'dis'
       console.log(`Started ${powerInWatt}W forcibly ${mode}charge for ${periodInMin} minutes`)
     } catch (error) {

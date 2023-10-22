@@ -6,6 +6,7 @@ exports.default = () => ({
   activateCommandKeyWatcher: false,
   batteryMonitorInterval: 10,
   timeZone: 'Europe/Brussels',
+  haDryRun: true,
   batteryConfig: {
     capacity: 10,
     maxChargePower: 5000,
@@ -64,14 +65,14 @@ exports.default = () => ({
   taskList: [
     {
       mode: 'charge',
-      from: parse('18/10/2023 10:00', DT_FORMAT, now),
-      till: parse('18/10/2023 11:00', DT_FORMAT, now),
+      from: parse('22/10/2023 10:00', DT_FORMAT, now),
+      till: parse('22/10/2023 11:00', DT_FORMAT, now),
       power: 2000,
     },
     {
       mode: 'discharge',
-      from: parse('18/10/2023 14:00', DT_FORMAT, now),
-      till: parse('18/10/2023 15:00', DT_FORMAT, now),
+      from: parse('23/10/2023 14:00', DT_FORMAT, now),
+      till: parse('23/10/2023 15:00', DT_FORMAT, now),
       power: 1800,
     },
   ],

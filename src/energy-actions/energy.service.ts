@@ -7,6 +7,7 @@ import { assign, max, sort } from 'radash'
 import { IChargeTask, chargeTaskSettingToString } from '../shared-models/charge-task.interface'
 import { IChargeTaskWire } from 'src/shared-models/charge-task-wire.interface'
 import { findIndex } from 'rxjs'
+import { subHours } from 'date-fns'
 
 @Injectable()
 export class EnergyService {
@@ -56,7 +57,7 @@ export class EnergyService {
     }
   }
 
-  allTasks() {
+  allTasks(since: Date = subHours(new Date(), 12)) {
     return sort(
       this._taskList.map(ct => ct.setting),
       ct => ct.from.getTime(),
