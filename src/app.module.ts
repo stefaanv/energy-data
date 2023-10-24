@@ -14,7 +14,7 @@ import { EnergyController } from './energy-actions/energy.controller'
 import { EnergyService } from './energy-actions/energy.service'
 
 // Db tables updaten: https://mikro-orm.io/docs/schema-generator
-//npx mikro-orm schema:update --run (werkt niet !)
+//npx mikro-orm schema:update --run
 const clientPath = resolve(__dirname, '..', 'client')
 console.log('clientPath', clientPath)
 @Module({
