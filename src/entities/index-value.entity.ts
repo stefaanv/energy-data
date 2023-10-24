@@ -6,12 +6,12 @@ export class IndexValue {
   @PrimaryKey({ columnType: 'timestamp' })
   startTime!: Date
 
+  @ManyToOne(() => Index, { primary: true })
+  index!: Index
+
   @Property({ columnType: 'timestamp' })
   endTime!: Date
 
   @Property({ columnType: 'real' })
   price!: number
-
-  @ManyToOne(() => Index)
-  index!: Index
 }

@@ -5,25 +5,27 @@ import { BatteryConfig, ChargeTask } from './charge-task.class'
 import { HomeAssistantCommuncationService } from '../home-assistant-communication.service'
 import { assign, max, sort } from 'radash'
 import { IChargeTask, chargeTaskSettingToString } from '../shared-models/charge-task.interface'
-import { IChargeTaskWire } from 'src/shared-models/charge-task-wire.interface'
-import { findIndex } from 'rxjs'
 import { subHours } from 'date-fns'
+import { LoggerService } from 'src/logger.service'
+import { EntityManager, EntityRepository } from '@mikro-orm/core'
+import { ChargeTaskEntity } from 'src/entities/energy-tasks.entity'
 
 @Injectable()
 export class EnergyService {
-  private _timeZone: string
-  private _taskList: Array<ChargeTask> = []
-  private _idCounter = 0
-  private _tlProxy: () => Array<IChargeTask>
+  // private _taskList: Array<ChargeTask> = []
+  private _taskListProxy: () => Array<IChargeTask>
+  private _taskListRepo: EntityRepository<ChargeTaskEntity>
 
   constructor(
     config: ConfigService,
     private _schedulerRegistry: SchedulerRegistry,
     private readonly _commService: HomeAssistantCommuncationService,
+    private readonly _log: LoggerService,
+    private readonly _em: EntityManager,
   ) {
+    this._taskListRepo = this._em.getRepository(ChargeTaskEntity)
     ChargeTask.config = config.get<BatteryConfig>('batteryConfig')
-    this._tlProxy = config.createProxy<Array<IChargeTask>>('taskList')
-    this._timeZone = config.get('timeZone')
+    this._taskListProxy = config.createProxy<Array<IChargeTask>>('taskList')
     const schedulerPeriodMs = 1000 * config.get<number>('batteryMonitorInterval')
     const schedulerInterval = setInterval(() => this.monitor(), schedulerPeriodMs)
     this._schedulerRegistry.addInterval('monitorInterval', schedulerInterval)
@@ -31,77 +33,74 @@ export class EnergyService {
     config.on('reloaded', () => this.loadTaskListFromConfig())
   }
 
-  loadTaskListFromConfig() {
-    for (const ctl of this._tlProxy()) {
-      const inTaskList = this._taskList.find(t => t.setting.from === ctl.from)
+  async loadTaskListFromConfig() {
+    const em = this._em.fork()
+    const taskListRepo = em.getRepository(ChargeTaskEntity)
+    const taskList = await taskListRepo.find({})
+    for (const ctl of this._taskListProxy()) {
+      const inTaskList = taskList.find(t => t.from === ctl.from)
       if (inTaskList) {
-        assign(inTaskList.setting, ctl)
+        assign(inTaskList, ctl)
       } else {
-        ctl.id = max(this._taskList.map(tl => tl.setting.id)) + 1
-        this._taskList.push(new ChargeTask(ctl))
+        em.insert(ChargeTaskEntity, ctl)
+        await em.flush()
       }
     }
-    setTimeout(this.printTaskList.bind(this), 500)
+    setTimeout(() => {
+      this.printTaskList(taskList)
+    }, 500)
   }
 
-  printTaskList() {
-    if (this._taskList.length === 0) {
+  async printTaskList(tl?: ChargeTaskEntity[]) {
+    const taskList = tl ?? (await this.allTasks())
+    if (taskList.length === 0) {
       console.log('tasklist is empty')
     } else {
       console.log('\ncurrent tasklist')
       console.log('================')
-      sort(
-        this._taskList.map(tl => tl.setting),
-        t => t.from.getTime(),
-      ).forEach(s => console.log(chargeTaskSettingToString(s)))
+      sort(taskList, t => t.from.getTime()).forEach(s => console.log(chargeTaskSettingToString(s)))
     }
   }
 
-  allTasks(since: Date = subHours(new Date(), 12)) {
-    return sort(
-      this._taskList.map(ct => ct.setting),
-      ct => ct.from.getTime(),
-    )
+  async allTasks(since: Date = subHours(new Date(), 12)) {
+    return this._taskListRepo.find({ from: { $lt: since } }, { orderBy: { from: 'asc' } })
   }
 
-  addTask(newTask: IChargeTask) {
-    newTask.id = max(this._taskList.map(tl => tl.setting.id)) + 1
-    this._taskList.push(new ChargeTask(newTask))
+  async addTask(newTask: IChargeTask) {
+    const task = this._em.insert(ChargeTaskEntity, newTask)
+    await this._em.persistAndFlush(task)
     this.printTaskList()
-    return newTask.id
+    return 0 //newTask.id
   }
 
-  updateTask(task: IChargeTask, id: number) {
-    const taskToUpdate = this._taskList.find(t => t.setting.id == id)
+  async updateTask(task: IChargeTask, id: number) {
+    const taskToUpdate = await this._taskListRepo.findOne({ id })
     if (!taskToUpdate) {
       const msg = `task with id=${id} does not exist`
       throw new HttpException(msg, HttpStatus.NOT_FOUND)
     }
-    task.id = taskToUpdate.setting.id
-    taskToUpdate.setting = task
+    assign(taskToUpdate, task)
+    await this._em.persistAndFlush(taskToUpdate)
     this.printTaskList()
   }
 
-  deleteTask(id: number) {
-    const index = this._taskList.map(tl => tl.setting).findIndex(s => s.id === id)
-    if (index < 0) {
-      const msg = `task with id=${id} does not exist`
-      throw new HttpException(msg, HttpStatus.NOT_FOUND)
-    }
-
-    this._taskList.splice(index, 1)
+  async deleteTask(id: number) {
+    await this._em.removeAndFlush(ChargeTaskEntity)
     this.printTaskList()
   }
 
-  monitor() {
+  async monitor() {
     const now = new Date()
-    // console.log(format(now, 'HH:mm:ss'))
-    for (const fc of this._taskList) {
-      if (fc.isWithinPeriod(now) && !fc.commandSent) {
-        const duration = fc.periodInMinutes()
-        const sign = fc.setting.mode === 'charge' ? 1 : -1
-        this._commService.startForcibly(sign * fc._power, duration)
-        fc.commandSent = true
+    const em = this._em.fork()
+    const taskList = await em.find(ChargeTaskEntity, { from: { $lt: now } })
+
+    for (const t of taskList) {
+      const task = new ChargeTask(t)
+      if (task.isWithinPeriod(now) && !task.commandSent) {
+        const duration = task.periodInMinutes()
+        const sign = task.setting.mode === 'charge' ? 1 : -1
+        this._commService.startForcibly(sign * task._power, duration)
+        task.commandSent = true
       }
     }
   }

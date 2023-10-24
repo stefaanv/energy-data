@@ -1,6 +1,7 @@
 import { format, OptionsWithTZ } from 'date-fns-tz'
 
-export type ChargeMode = 'charge' | 'discharge'
+export const ChargeModeValues = ['charge', 'discharge'] as const
+export type ChargeMode = (typeof ChargeModeValues)[number]
 export type Percentage = number
 const TZO: OptionsWithTZ = { timeZone: 'Europe/Brussels' } //TODO nog uit config halen BE/FE
 const TF = 'd/MM HH:mm'
