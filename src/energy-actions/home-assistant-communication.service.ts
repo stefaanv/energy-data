@@ -9,12 +9,18 @@ import {
   HA_BEARER_TOKEN_CKEY,
   HA_CKEY,
   HA_CMD_CKEY,
-} from './config-validator.joi'
-import { LoggerService } from './logger.service'
+} from '../config-validator.joi'
+import { LoggerService } from '../logger.service'
+import { format } from 'date-fns'
+import { BatteryOperationMode } from 'src/shared-models/charge-task.interface'
 
 interface CmdConfigBase {
   url: string
   postData: Record<string, string | number>
+}
+
+interface CurrentStatus {
+  mode: BatteryOperationMode
 }
 
 interface ChgCmdConfig extends CmdConfigBase {
@@ -79,7 +85,10 @@ export class HomeAssistantCommuncationService {
     try {
       await axios.post(url, config.postData, this._axiosOptions)
       const mode = power > 0 ? '' : 'dis'
-      console.log(`Started ${powerInWatt}W forcibly ${mode}charge for ${periodInMin} minutes`)
+      //TODO: boodschap nog verplaatsen naar aanroepende functie !!!
+      const dateForm = format(new Date(), 'd/MM HH:mm')
+      const msg = `Started ${powerInWatt}W forcibly ${mode}charge for ${periodInMin} minutes at ${dateForm}`
+      console.log(msg)
     } catch (error) {
       console.error(error.message)
     }

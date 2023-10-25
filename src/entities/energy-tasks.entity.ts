@@ -1,13 +1,17 @@
 import { Entity, Enum, PrimaryKey, Property } from '@mikro-orm/core'
-import { ChargeMode, ChargeModeValues, IChargeTask } from 'src/shared-models/charge-task.interface'
+import {
+  BatteryOperationMode,
+  BatteryOperationModeValues,
+  IChargeTask,
+} from 'src/shared-models/charge-task.interface'
 
 @Entity({ tableName: 'charge-tasks' })
 export class ChargeTaskEntity implements IChargeTask {
   @PrimaryKey({ columnType: 'int', autoincrement: true })
   id!: number
 
-  @Enum(() => ChargeModeValues)
-  mode!: ChargeMode
+  @Enum(() => BatteryOperationModeValues)
+  mode!: BatteryOperationMode
 
   @Property({ columnType: 'timestamp' })
   from!: Date

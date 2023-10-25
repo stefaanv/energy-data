@@ -1,9 +1,9 @@
 import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
-import { SchedulerRegistry } from '@nestjs/schedule'
+// import { SchedulerRegistry } from '@nestjs/schedule'
 import { BatteryConfig, ChargeTask } from './charge-task.class'
-import { HomeAssistantCommuncationService } from '../home-assistant-communication.service'
-import { assign, max, sort } from 'radash'
+import { HomeAssistantCommuncationService } from './home-assistant-communication.service'
+import { assign, sort } from 'radash'
 import { IChargeTask, chargeTaskSettingToString } from '../shared-models/charge-task.interface'
 import { subHours } from 'date-fns'
 import { LoggerService } from 'src/logger.service'
@@ -12,23 +12,22 @@ import { ChargeTaskEntity } from 'src/entities/energy-tasks.entity'
 
 @Injectable()
 export class EnergyService {
-  // private _taskList: Array<ChargeTask> = []
   private _taskListProxy: () => Array<IChargeTask>
   private _taskListRepo: EntityRepository<ChargeTaskEntity>
 
   constructor(
     config: ConfigService,
-    private _schedulerRegistry: SchedulerRegistry,
-    private readonly _commService: HomeAssistantCommuncationService,
+    // private _schedulerRegistry: SchedulerRegistry,
+    // private readonly _commService: HomeAssistantCommuncationService,
     private readonly _log: LoggerService,
     private readonly _em: EntityManager,
   ) {
     this._taskListRepo = this._em.getRepository(ChargeTaskEntity)
     ChargeTask.config = config.get<BatteryConfig>('batteryConfig')
     this._taskListProxy = config.createProxy<Array<IChargeTask>>('taskList')
-    const schedulerPeriodMs = 1000 * config.get<number>('batteryMonitorInterval')
-    const schedulerInterval = setInterval(() => this.monitor(), schedulerPeriodMs)
-    this._schedulerRegistry.addInterval('monitorInterval', schedulerInterval)
+    // const schedulerPeriodMs = 1000 * config.get<number>('batteryMonitorInterval')
+    // const schedulerInterval = setInterval(() => this.monitor(), schedulerPeriodMs)
+    // this._schedulerRegistry.addInterval('monitorInterval', schedulerInterval)
     this.loadTaskListFromConfig()
     config.on('reloaded', () => this.loadTaskListFromConfig())
   }
@@ -89,6 +88,7 @@ export class EnergyService {
     this.printTaskList()
   }
 
+  /*
   async monitor() {
     const now = new Date()
     const em = this._em.fork()
@@ -104,4 +104,5 @@ export class EnergyService {
       }
     }
   }
+  */
 }

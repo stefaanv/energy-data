@@ -2,7 +2,6 @@ import { addDays, differenceInCalendarDays, parseISO } from 'date-fns'
 import { omit } from 'radash'
 import { IChargeTask } from './charge-task.interface'
 
-export type ChargeMode = 'charge' | 'discharge'
 export type Percentage = number
 
 export type IChargeTaskWire = Omit<IChargeTask, 'from' | 'till'> & {

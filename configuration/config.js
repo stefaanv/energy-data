@@ -5,6 +5,7 @@ const now = new Date()
 exports.default = () => ({
   activateCommandKeyWatcher: false,
   batteryMonitorInterval: 10,
+  monitorIntervalSec: 30,
   timeZone: 'Europe/Brussels',
   haDryRun: true,
   batteryConfig: {
