@@ -1,6 +1,5 @@
 import { differenceInMinutes, isBefore } from 'date-fns'
 import { IChargeTask } from '../shared-models/charge-task.interface'
-import { isDate } from 'radash'
 
 export interface BatteryConfig {
   /** in kWh */ capacity: number
@@ -8,11 +7,6 @@ export interface BatteryConfig {
   /** in Watt */ maxDischargePower: number
   /** in % */ lowerSocLimit: number
   /** in % */ upperSocLimit: number
-}
-
-function isBetween(date: Date, from: Date, till: Date) {
-  const result = isBefore(date, till) && isBefore(from, date)
-  return result
 }
 
 export class ChargeTask {
