@@ -10,6 +10,11 @@ export interface BatteryConfig {
   /** in % */ upperSocLimit: number
 }
 
+function isBetween(date: Date, from: Date, till: Date) {
+  const result = isBefore(date, till) && isBefore(from, date)
+  return result
+}
+
 export class ChargeTask {
   static config: BatteryConfig
   public readonly _power: number
@@ -69,10 +74,8 @@ export class ChargeTask {
       : Math.max(power, -this._powerLimit)
   }
 
-  isWithinPeriod(time: Date | number) {
-    const timePart = isDate(time) ? time.getHours() / 24 + time.getMinutes() / 24 / 60 : time
-    // return this.setting.from < timePart && timePart < this.setting.till
-    return true
+  isWithinPeriod(time: Date) {
+    return isBetween(time, this.setting.from, this.setting.till)
   }
 
   get power() {

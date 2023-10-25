@@ -13,10 +13,10 @@ export class ChargeTaskEntity implements IChargeTask {
   @Enum(() => BatteryOperationModeValues)
   mode!: BatteryOperationMode
 
-  @Property({ columnType: 'timestamp' })
+  @Property()
   from!: Date
 
-  @Property({ columnType: 'timestamp' })
+  @Property()
   till!: Date
 
   @Property({ columnType: 'real' })
