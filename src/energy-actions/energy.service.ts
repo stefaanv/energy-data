@@ -5,14 +5,13 @@ import { BatteryConfig, ChargeTask } from './charge-task.class'
 import { HomeAssistantCommuncationService } from '../home-assistant-communication.service'
 import { assign, max, sort } from 'radash'
 import { IChargeTask, chargeTaskSettingToString } from '../shared-models/charge-task.interface'
-import { subHours } from 'date-fns'
+import { differenceInSeconds, subHours } from 'date-fns'
 import { LoggerService } from 'src/logger.service'
 import { EntityManager, EntityRepository } from '@mikro-orm/core'
 import { ChargeTaskEntity } from 'src/entities/energy-tasks.entity'
 
 @Injectable()
 export class EnergyService {
-  // private _taskList: Array<ChargeTask> = []
   private _taskListProxy: () => Array<IChargeTask>
   private _taskListRepo: EntityRepository<ChargeTaskEntity>
 
@@ -38,14 +37,14 @@ export class EnergyService {
     const taskListRepo = em.getRepository(ChargeTaskEntity)
     const taskList = await taskListRepo.find({})
     for (const ctl of this._taskListProxy()) {
-      const inTaskList = taskList.find(t => t.from === ctl.from)
+      const inTaskList = taskList.find(t => Math.abs(differenceInSeconds(t.from, ctl.from)) <= 5)
       if (inTaskList) {
         assign(inTaskList, ctl)
       } else {
         em.insert(ChargeTaskEntity, ctl)
-        await em.flush()
       }
     }
+    await em.flush()
     setTimeout(() => {
       this.printTaskList(taskList)
     }, 500)
@@ -63,36 +62,31 @@ export class EnergyService {
   }
 
   async allTasks(since: Date = subHours(new Date(), 12)) {
-    return this._taskListRepo.find({ from: { $lt: since } }, { orderBy: { from: 'asc' } })
+    return this._taskListRepo.find({ from: { $gt: since } }, { orderBy: { from: 'asc' } })
   }
 
   async addTask(newTask: IChargeTask) {
-    const task = this._em.insert(ChargeTaskEntity, newTask)
-    await this._em.persistAndFlush(task)
+    delete newTask.id
+    const taskId = await this._em.insert(ChargeTaskEntity, newTask)
     this.printTaskList()
-    return 0 //newTask.id
+    return taskId
   }
 
-  async updateTask(task: IChargeTask, id: number) {
-    const taskToUpdate = await this._taskListRepo.findOne({ id })
-    if (!taskToUpdate) {
-      const msg = `task with id=${id} does not exist`
-      throw new HttpException(msg, HttpStatus.NOT_FOUND)
-    }
-    assign(taskToUpdate, task)
-    await this._em.persistAndFlush(taskToUpdate)
+  async updateTask(task: IChargeTask) {
+    await this._em.upsert(ChargeTaskEntity, task)
     this.printTaskList()
   }
 
   async deleteTask(id: number) {
-    await this._em.removeAndFlush(ChargeTaskEntity)
+    await this._em.nativeDelete(ChargeTaskEntity, { id })
     this.printTaskList()
   }
 
+  //TODO - commandSent in DB of opvragen uit inverter
   async monitor() {
     const now = new Date()
     const em = this._em.fork()
-    const taskList = await em.find(ChargeTaskEntity, { from: { $lt: now } })
+    const taskList = await em.find(ChargeTaskEntity, { from: { $gt: now } })
 
     for (const t of taskList) {
       const task = new ChargeTask(t)

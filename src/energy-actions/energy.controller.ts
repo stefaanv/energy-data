@@ -18,10 +18,10 @@ export class EnergyController {
     return this._service.addTask(t)
   }
 
-  @Post('task/:id')
-  async updateEnergyTask(@Body() task: IChargeTaskWire, @Param('id') id: number) {
+  @Post('task')
+  async updateEnergyTask(@Body() task: IChargeTaskWire) {
     const t = chargeTaskFromWire(task)
-    this._service.updateTask(t, id)
+    this._service.updateTask(t)
   }
 
   @Delete('task/:id')
