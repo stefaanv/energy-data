@@ -42,6 +42,11 @@ export class AppController {
     return this._appService.getConfig()
   }
 
+  @Get('smart-meter')
+  getSmartMeterData() {
+    return this._haCommService.getSmartmeterInfo()
+  }
+
   @Get('belpex')
   async getBelpex() {
     const twoDaysAgo = subDays(new Date(), 2)

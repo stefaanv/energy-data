@@ -1,5 +1,6 @@
 import { differenceInMinutes, isBefore } from 'date-fns'
 import { IChargeTask } from '../shared-models/charge-task.interface'
+import { isBetween } from '../helpers/time.helpers'
 
 export interface BatteryConfig {
   /** in kWh */ capacity: number

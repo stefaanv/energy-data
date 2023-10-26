@@ -7,7 +7,6 @@ import { BatteryOperationMode } from '../shared-models/charge-task.interface'
 import { ChargeTask } from './charge-task.class'
 import { HomeAssistantCommuncationService } from './home-assistant-communication.service'
 import { isBetween } from 'src/helpers/time.helpers'
-import { diff } from 'radash'
 import { format } from 'date-fns-tz'
 
 export interface BatteryOperationStatus {

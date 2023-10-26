@@ -31,7 +31,7 @@ exports.default = () => ({
     bearerToken: '{{ENV_BEARER_TOKEN}}',
     servicesUrl: '/services',
     commands: {
-      forciblyChargeCommand: {
+      forciblyCharge: {
         url: 'services/huawei_solar/forcible_charge',
         postData: {
           device_id: 'd36a4ede8885b40373c9b4d100e7f139',
@@ -39,7 +39,7 @@ exports.default = () => ({
           duration: 0,
         },
       },
-      forciblyDischargeCommand: {
+      forciblyDischarge: {
         url: 'services/huawei_solar/forcible_discharge',
         postData: {
           device_id: 'd36a4ede8885b40373c9b4d100e7f139',
@@ -53,8 +53,12 @@ exports.default = () => ({
           device_id: 'd36a4ede8885b40373c9b4d100e7f139',
         },
       },
+    },
+    sensors: {
       smartMeter: {
         url: 'states',
+        powerConsumed: 'sensor.power_consumed',
+        powerProduced: 'sensor.power_produced',
         consumptionEntityIds: [
           'sensor.energy_consumed_tariff_1',
           'sensor.energy_consumed_tariff_2',

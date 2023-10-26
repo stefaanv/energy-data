@@ -1,20 +1,20 @@
 import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
 import { Injectable } from '@nestjs/common'
 import * as axios from 'axios'
-import {
-  HA_BASEURL_CKEY,
-  HA_CHARGE_CKEY,
-  HA_DISCH_CMD_CKEY,
-  HA_STOP_CMD_CKEY,
-  HA_BEARER_TOKEN_CKEY,
-  HA_CKEY,
-  HA_CMD_CKEY,
-} from '../config-validator.joi'
+import { HA_BASEURL_CKEY, HA_BEARER_TOKEN_CKEY, HA_CKEY } from '../config-validator.joi'
 import { LoggerService } from '../logger.service'
 
 interface CmdConfigBase {
   url: string
   postData: Record<string, string | number>
+}
+
+interface SmartMeterConfig {
+  url: string
+  powerConsumed: string
+  powerProduced: string
+  consumptionEntityIds: string[]
+  productionEntityIds: string[]
 }
 
 interface ChgCmdConfig extends CmdConfigBase {
@@ -31,22 +31,39 @@ export class HomeAssistantCommuncationService {
   private readonly _haStopChargeConfig: CmdConfigBase
   private readonly _haForciblyChargeConfig: ChgCmdConfig
   private readonly _haForciblyDischargeConfig: ChgCmdConfig
+  private readonly _haSmartMeterConfig: SmartMeterConfig
   private readonly _dryRunProxy: () => boolean
 
   constructor(
     config: ConfigService,
     private readonly _log: LoggerService,
   ) {
-    this._baseUrl = config.get([HA_CKEY, HA_BASEURL_CKEY])
-    const bearer = config.get([HA_CKEY, HA_BEARER_TOKEN_CKEY])
+    this._baseUrl = config.get('homeAssistant.baseUrl')
+    const bearer = config.get('homeAssistant.bearerToken')
     const headers = { Authorization: `Bearer ${bearer}` }
     this._axiosOptions = { baseURL: this._baseUrl, headers }
 
-    const cmdPrefix = [HA_CKEY, HA_CMD_CKEY]
-    this._haStopChargeConfig = config.get<CmdConfigBase>([...cmdPrefix, HA_STOP_CMD_CKEY])
-    this._haForciblyChargeConfig = config.get<ChgCmdConfig>([...cmdPrefix, HA_CHARGE_CKEY])
-    this._haForciblyDischargeConfig = config.get<ChgCmdConfig>([...cmdPrefix, HA_DISCH_CMD_CKEY])
+    this._haStopChargeConfig = config.get<CmdConfigBase>(
+      'homeAssistant.commands.stopForciblyChargeDischarge',
+    )
+    this._haForciblyChargeConfig = config.get<ChgCmdConfig>('homeAssistant.commands.forciblyCharge')
+    this._haForciblyDischargeConfig = config.get<ChgCmdConfig>(
+      'homeAssistant.commands.forciblyDischarge',
+    )
+    this._haSmartMeterConfig = config.get<SmartMeterConfig>('homeAssistant.sensors.smartMeter')
     this._dryRunProxy = config.createProxy('')
+  }
+
+  async getSmartmeterInfo() {
+    const config = this._haSmartMeterConfig
+    const url = this._baseUrl + '/' + config.url + '/' + config.powerConsumed
+    try {
+      const result = (await axios.get(url, this._axiosOptions)).data
+      console.log(result)
+      return result
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   async stopForciblyCharge() {
