@@ -44,7 +44,7 @@ export class AppController {
 
   @Get('smart-meter')
   getSmartMeterData() {
-    return this._haCommService.getSmartmeterInfo()
+    return this._haCommService.getEnergyData()
   }
 
   @Get('belpex')

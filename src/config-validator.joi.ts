@@ -16,8 +16,8 @@ export const HA_SMART_METER_CKEY = 'smartMeter'
 export const HA_SMART_METER_URL_CKEY = 'url'
 export const HA_SMART_METER_CONS_IDS_CKEY = 'consumptionEntityIds'
 export const HA_SMART_METER_PROD_IDS_CKEY = 'productionEntityIds'
-export const HA_SMART_METER_POWER_CONS_CKEY = 'powerConsumption'
-export const HA_SMART_METER_POWER_PROD_CKEY = 'powerProduction'
+export const HA_SMART_METER_POWER_CONS_CKEY = 'powerConsumptionId'
+export const HA_SMART_METER_POWER_PROD_CKEY = 'powerProductionId'
 
 const batteryConfigSchema = Joi.object({
   capacity: Joi.number().description('battery capacity in kWh'),

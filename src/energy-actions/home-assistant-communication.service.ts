@@ -2,24 +2,35 @@ import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
 import { Injectable } from '@nestjs/common'
 import * as axios from 'axios'
 import { LoggerService } from '../logger.service'
+import { select, sum } from 'radash'
 
 interface CmdConfigBase {
   url: string
   postData: Record<string, string | number>
 }
 
-interface SmartMeterConfig {
+interface SmartMeterIds {
   url: string
   powerConsumption: string
   powerProduction: string
-  consumptionEntityIds: string[]
-  productionEntityIds: string[]
+  consumptionEntity: string[]
+  productionEntity: string[]
 }
 
-export interface SmartMeterData {
+interface InverterIds {
+  batterySoc: string
+  chargePower: string
+  inputPower: string
+  pmActivePower: string
+}
+
+export interface EnergyData {
   time: Date
   power: { consumption: number; production: number }
   energy: { consumption: number; production: number }
+  battery: { soc: number; chargePower: number }
+  inverter: { inputPower: number }
+  grid: { power: number }
 }
 
 interface ChgCmdConfig extends CmdConfigBase {
@@ -29,6 +40,11 @@ interface ChgCmdConfig extends CmdConfigBase {
   minutesToDurationMultiplier: number
 }
 
+interface HomeAssistantEntity {
+  entity_id: string
+  state: string
+}
+
 @Injectable()
 export class HomeAssistantCommuncationService {
   private readonly _baseUrl: string
@@ -36,7 +52,8 @@ export class HomeAssistantCommuncationService {
   private readonly _haStopChargeConfig: CmdConfigBase
   private readonly _haForciblyChargeConfig: ChgCmdConfig
   private readonly _haForciblyDischargeConfig: ChgCmdConfig
-  private readonly _haSmartMeterConfig: SmartMeterConfig
+  private readonly _haSmartMeterIds: SmartMeterIds
+  private readonly _haInverterIds: InverterIds
   private readonly _dryRunProxy: () => boolean
 
   constructor(
@@ -55,27 +72,44 @@ export class HomeAssistantCommuncationService {
     this._haForciblyDischargeConfig = config.get<ChgCmdConfig>(
       'homeAssistant.commands.forciblyDischarge',
     )
-    this._haSmartMeterConfig = config.get<SmartMeterConfig>('homeAssistant.sensors.smartMeter')
+    this._haSmartMeterIds = config.get<SmartMeterIds>('homeAssistant.sensors.smartMeter')
+    this._haInverterIds = config.get<InverterIds>('homeAssistant.sensors.inverter')
     this._dryRunProxy = config.createProxy('')
   }
 
-  async getSmartmeterInfo(): Promise<SmartMeterData> {
+  async getEnergyData(): Promise<EnergyData> {
+    const sumSelect = (a: HomeAssistantEntity[], ids: string[]) =>
+      sum(
+        a.filter(e => ids.includes(e.entity_id)),
+        e => parseFloat(e.state),
+      )
     const time = new Date()
-    const config = this._haSmartMeterConfig
-    const baseUrl = this._baseUrl + '/' + config.url
-    const get = async (urlPostFix: string) => {
-      const url = baseUrl + '/' + urlPostFix
-      return parseFloat((await axios.get(url, this._axiosOptions)).data.state)
-    }
+    const smConfig = this._haSmartMeterIds
+    const invConfig = this._haInverterIds
+    const baseUrl = this._baseUrl + '/states'
     try {
-      const x = await axios.get(baseUrl, this._axiosOptions)
-      debugger //TODO: in 1 keer binnen trekken en de juiste waarden eruit halen
-      const powerProduction = await get(config.powerConsumption)
-      const powerConsumption = await get(config.powerProduction)
+      const allStates = (await axios.get<HomeAssistantEntity[]>(baseUrl, this._axiosOptions)).data
+
       return {
         time,
-        power: { production: powerProduction, consumption: powerConsumption },
-        energy: { production: 0, consumption: 0 },
+        power: {
+          production: sumSelect(allStates, [smConfig.powerProduction]),
+          consumption: sumSelect(allStates, [smConfig.powerConsumption]),
+        },
+        energy: {
+          production: sumSelect(allStates, smConfig.productionEntity),
+          consumption: sumSelect(allStates, smConfig.consumptionEntity),
+        },
+        battery: {
+          soc: sumSelect(allStates, [invConfig.batterySoc]),
+          chargePower: sumSelect(allStates, [invConfig.chargePower]),
+        },
+        inverter: {
+          inputPower: sumSelect(allStates, [invConfig.inputPower]),
+        },
+        grid: {
+          power: sumSelect(allStates, [invConfig.pmActivePower]),
+        },
       }
     } catch (error) {
       console.log(error)

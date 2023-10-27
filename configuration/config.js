@@ -56,14 +56,16 @@ exports.default = () => ({
     },
     sensors: {
       smartMeter: {
-        url: 'states',
         powerConsumption: 'sensor.power_consumed',
         powerProduction: 'sensor.power_produced',
-        consumptionEntityIds: [
-          'sensor.energy_consumed_tariff_1',
-          'sensor.energy_consumed_tariff_2',
-        ],
-        productionEntityIds: ['sensor.energy_produced_tariff_1', 'sensor.energy_produced_tariff_2'],
+        consumptionEntity: ['sensor.energy_consumed_tariff_1', 'sensor.energy_consumed_tariff_2'],
+        productionEntity: ['sensor.energy_produced_tariff_1', 'sensor.energy_produced_tariff_2'],
+      },
+      inverter: {
+        batterySoc: 'sensor.battery_state_of_capacity',
+        chargePower: 'sensor.battery_charge_discharge_power',
+        inputPower: 'sensor.inverter_input_power',
+        pmActivePower: 'sensor.power_meter_active_power',
       },
     },
   },
