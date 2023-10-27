@@ -2,16 +2,22 @@ import { Entity, Enum, PrimaryKey, Property } from '@mikro-orm/core'
 
 @Entity({ tableName: 'quarterly' })
 export class QuarterlyEntity {
+  static dateTimeFormat = 'd/M/yyyy HH:mm'
+  static timeZone = 'Europe/Brussels'
+
   @PrimaryKey({ columnType: 'timestamp' })
   startTime!: Date
 
-  @Property({ columnType: 'real' })
-  /** in Wh*/
-  consumed: number
+  @Property({ columnType: 'varchar' })
+  hrTime!: string
 
   @Property({ columnType: 'real' })
   /** in Wh*/
-  produced: number
+  gridConsumed: number
+
+  @Property({ columnType: 'real' })
+  /** in Wh*/
+  gridProduced: number
 
   @Property({ columnType: 'real' })
   /** in Wh*/

@@ -34,7 +34,7 @@ console.log('clientPath', clientPath)
       dbName: './db/sqlite.db',
       type: 'sqlite',
       autoLoadEntities: true,
-      debug: true,
+      debug: false,
     }),
     ServeStaticModule.forRoot({
       rootPath: clientPath,

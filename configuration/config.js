@@ -71,17 +71,17 @@ exports.default = () => ({
     },
   },
   taskList: [
-    {
-      mode: 'charge',
-      from: parse('22/10/2023 10:00', DT_FORMAT, now),
-      till: parse('22/10/2023 11:00', DT_FORMAT, now),
-      power: 2000,
-    },
-    {
-      mode: 'discharge',
-      from: parse('23/10/2023 14:00', DT_FORMAT, now),
-      till: parse('23/10/2023 15:00', DT_FORMAT, now),
-      power: 1800,
-    },
+    // {
+    //   mode: 'charge',
+    //   from: parse('22/10/2023 10:00', DT_FORMAT, now),
+    //   till: parse('22/10/2023 11:00', DT_FORMAT, now),
+    //   power: 2000,
+    // },
+    // {
+    //   mode: 'discharge',
+    //   from: parse('23/10/2023 14:00', DT_FORMAT, now),
+    //   till: parse('23/10/2023 15:00', DT_FORMAT, now),
+    //   power: 1800,
+    // },
   ],
 })

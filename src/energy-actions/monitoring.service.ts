@@ -13,7 +13,7 @@ import { isBetween } from 'src/helpers/time.helpers'
 import { format } from 'date-fns-tz'
 import { get } from 'radash'
 import { EntityManager } from '@mikro-orm/sqlite'
-import { QuarterlyEntity } from 'src/entities/energy-quarterly'
+import { QuarterlyEntity } from 'src/entities/quarterly'
 
 export interface BatteryOperationStatus {
   workingMode: BatteryOperationMode
@@ -84,7 +84,7 @@ export class MonitorService {
     }
   }
 
-  @Cron('0 */15 * * * *')
+  @Cron('* */15 * * * *')
   async everyQuarter() {
     const now = new Date()
     const current = await this._haCommService.getEnergyData()
@@ -111,6 +111,9 @@ export class MonitorService {
         produced: production,
         monthlyPeak: this._monthlyPeakConsumption,
         startTime: now,
+        hrTime: format(now, QuarterlyEntity.dateTimeFormat, {
+          timeZone: QuarterlyEntity.timeZone,
+        }),
       })
     } else {
       this._log.log(`getting initial quarter data`)
