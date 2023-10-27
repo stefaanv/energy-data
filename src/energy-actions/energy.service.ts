@@ -1,5 +1,5 @@
 import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 // import { SchedulerRegistry } from '@nestjs/schedule'
 import { BatteryConfig, ChargeTask } from './charge-task.class'
 import { HomeAssistantCommuncationService } from './home-assistant-communication.service'

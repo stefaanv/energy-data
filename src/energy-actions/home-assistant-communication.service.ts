@@ -1,7 +1,6 @@
 import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
 import { Injectable } from '@nestjs/common'
 import * as axios from 'axios'
-import { HA_BASEURL_CKEY, HA_BEARER_TOKEN_CKEY, HA_CKEY } from '../config-validator.joi'
 import { LoggerService } from '../logger.service'
 
 interface CmdConfigBase {
@@ -11,10 +10,16 @@ interface CmdConfigBase {
 
 interface SmartMeterConfig {
   url: string
-  powerConsumed: string
-  powerProduced: string
+  powerConsumption: string
+  powerProduction: string
   consumptionEntityIds: string[]
   productionEntityIds: string[]
+}
+
+export interface SmartMeterData {
+  time: Date
+  power: { consumption: number; production: number }
+  energy: { consumption: number; production: number }
 }
 
 interface ChgCmdConfig extends CmdConfigBase {
@@ -54,13 +59,24 @@ export class HomeAssistantCommuncationService {
     this._dryRunProxy = config.createProxy('')
   }
 
-  async getSmartmeterInfo() {
+  async getSmartmeterInfo(): Promise<SmartMeterData> {
+    const time = new Date()
     const config = this._haSmartMeterConfig
-    const url = this._baseUrl + '/' + config.url + '/' + config.powerConsumed
+    const baseUrl = this._baseUrl + '/' + config.url
+    const get = async (urlPostFix: string) => {
+      const url = baseUrl + '/' + urlPostFix
+      return parseFloat((await axios.get(url, this._axiosOptions)).data.state)
+    }
     try {
-      const result = (await axios.get(url, this._axiosOptions)).data
-      console.log(result)
-      return result
+      const x = await axios.get(baseUrl, this._axiosOptions)
+      debugger //TODO: in 1 keer binnen trekken en de juiste waarden eruit halen
+      const powerProduction = await get(config.powerConsumption)
+      const powerConsumption = await get(config.powerProduction)
+      return {
+        time,
+        power: { production: powerProduction, consumption: powerConsumption },
+        energy: { production: 0, consumption: 0 },
+      }
     } catch (error) {
       console.log(error)
     }

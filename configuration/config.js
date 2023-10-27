@@ -57,8 +57,8 @@ exports.default = () => ({
     sensors: {
       smartMeter: {
         url: 'states',
-        powerConsumed: 'sensor.power_consumed',
-        powerProduced: 'sensor.power_produced',
+        powerConsumption: 'sensor.power_consumed',
+        powerProduction: 'sensor.power_produced',
         consumptionEntityIds: [
           'sensor.energy_consumed_tariff_1',
           'sensor.energy_consumed_tariff_2',
