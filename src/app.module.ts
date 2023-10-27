@@ -12,6 +12,7 @@ import { ServeStaticModule } from '@nestjs/serve-static'
 import { resolve } from 'path'
 import { EnergyController } from './energy-actions/energy.controller'
 import { EnergyService } from './energy-actions/energy.service'
+import { MonitorService } from './energy-actions/monitoring.service'
 
 // Db tables updaten: https://mikro-orm.io/docs/schema-generator
 //npx mikro-orm schema:update --run
@@ -44,6 +45,7 @@ console.log('clientPath', clientPath)
     AppService,
     LoggerService,
     HomeAssistantCommuncationService,
+    MonitorService,
     PricingService,
     EnergyService,
   ],

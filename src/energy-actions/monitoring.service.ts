@@ -1,13 +1,19 @@
 import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
 import { Injectable } from '@nestjs/common'
-import { SchedulerRegistry } from '@nestjs/schedule'
+import { Cron, SchedulerRegistry } from '@nestjs/schedule'
 import { LoggerService } from 'src/logger.service'
 import { EnergyService } from './energy.service'
 import { BatteryOperationMode } from '../shared-models/charge-task.interface'
 import { ChargeTask } from './charge-task.class'
-import { HomeAssistantCommuncationService } from './home-assistant-communication.service'
+import {
+  EnergyData,
+  HomeAssistantCommuncationService,
+} from './home-assistant-communication.service'
 import { isBetween } from 'src/helpers/time.helpers'
 import { format } from 'date-fns-tz'
+import { get } from 'radash'
+import { EntityManager } from '@mikro-orm/sqlite'
+import { QuarterlyEntity } from 'src/entities/energy-quarterly'
 
 export interface BatteryOperationStatus {
   workingMode: BatteryOperationMode
@@ -31,7 +37,10 @@ function isCloseTo(a: number, b: number, divergence = 0.01) {
 
 @Injectable()
 export class MonitorService {
-  private _currentStatus: BatteryOperationStatus
+  private _currentBatOperationStatus: BatteryOperationStatus
+  private _startQuarterValues: EnergyData
+  private _monthlyPeakConsumption: number
+  private _minMonthlyPeakConsumption: number
 
   constructor(
     config: ConfigService,
@@ -39,11 +48,14 @@ export class MonitorService {
     schedulerRegistry: SchedulerRegistry,
     private readonly _energyService: EnergyService,
     private readonly _haCommService: HomeAssistantCommuncationService,
+    private readonly _em: EntityManager,
   ) {
-    const schedulerPeriodMs = 1000 * config.get<number>('monitorIntervalSec')
-    const schedulerInterval = setInterval(() => this.monitor(), schedulerPeriodMs)
-    schedulerRegistry.addInterval('monitorService.monitorInterval', schedulerInterval)
-    this._currentStatus = START_STATUS
+    const fastPeriodMs = 1000 * config.get<number>('monitorIntervalSec')
+    const fastInterval = setInterval(() => this.monitor(), fastPeriodMs)
+    schedulerRegistry.addInterval('monitorService.fastInterval', fastInterval)
+    this._currentBatOperationStatus = START_STATUS
+    this._minMonthlyPeakConsumption = config.get<number>('minMonthlyPeakWh')
+    this._monthlyPeakConsumption = 0
   }
 
   async monitor() {
@@ -57,7 +69,7 @@ export class MonitorService {
       if (task.isWithinPeriod(now)) {
         const duration = task.periodInMinutes()
         const power = (task.setting.mode === 'charge' ? 1 : -1) * task._power
-        const curStat = this._currentStatus
+        const curStat = this._currentBatOperationStatus
         if (!isCloseTo(power, curStat.setPower) || curStat.workingMode !== task.setting.mode) {
           this._haCommService.startForcibly(power, duration)
           curStat.setPower = power
@@ -70,5 +82,44 @@ export class MonitorService {
         task.commandSent = true
       }
     }
+  }
+
+  @Cron('0 */15 * * * *')
+  async everyQuarter() {
+    const now = new Date()
+    const current = await this._haCommService.getEnergyData()
+    current.energy.monthlyPeak = this._monthlyPeakConsumption
+
+    if (this._startQuarterValues) {
+      const prodKey = 'energy.production'
+      const production =
+        1000 * (get<number>(current, prodKey) - get<number>(this._startQuarterValues, prodKey))
+      const consKey = 'energy.consumption'
+      const consumption =
+        1000 * (get<number>(current, consKey) - get<number>(this._startQuarterValues, consKey))
+      const time = format(now, 'HH:mm')
+      const msg = `quarter info at ${time} : cons ${consumption}Wh, inj ${production}Wh`
+      this._log.log(msg)
+      if (consumption > this._monthlyPeakConsumption) {
+        this._monthlyPeakConsumption = consumption
+        this._log.warn(`monthly peak increaed to ${consumption}`)
+      }
+      const em = this._em.fork()
+      em.insert(QuarterlyEntity, {
+        batterySoc: current.battery.soc,
+        consumed: consumption,
+        produced: production,
+        monthlyPeak: this._monthlyPeakConsumption,
+        startTime: now,
+      })
+    } else {
+      this._log.log(`getting initial quarter data`)
+    }
+    this._startQuarterValues = current
+  }
+
+  @Cron('0 0 0 1 * *')
+  async resetMonthlyValues() {
+    this._monthlyPeakConsumption = 0
   }
 }

@@ -62,7 +62,9 @@ export class EnergyService {
   }
 
   async allTasks(since: Date = subHours(new Date(), 12)) {
-    return this._taskListRepo.find({ from: { $gt: since } }, { orderBy: { from: 'asc' } })
+    const em = this._em.fork()
+    const taskListRepo = em.getRepository(ChargeTaskEntity)
+    return taskListRepo.find({ from: { $gt: since } }, { orderBy: { from: 'asc' } })
   }
 
   async addTask(newTask: IChargeTask) {

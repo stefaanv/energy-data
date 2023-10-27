@@ -6,6 +6,7 @@ exports.default = () => ({
   activateCommandKeyWatcher: false,
   batteryMonitorInterval: 10,
   monitorIntervalSec: 30,
+  minMonthlyPeakWh: 625,
   timeZone: 'Europe/Brussels',
   haDryRun: true,
   batteryConfig: {
