@@ -5,10 +5,13 @@ import { BELPEX_CKEY, BELPEX_URL_CKEY, BELPEX_PARAMS_CKEY } from './config-valid
 import { LoggerService } from './logger.service'
 import { addHours, isBefore, parseISO } from 'date-fns'
 import { format, utcToZonedTime } from 'date-fns-tz'
-import { first, last } from 'radash'
+import { first, last, tryit } from 'radash'
 import { EntityManager } from '@mikro-orm/core'
 import { Index } from './entities/index.entity'
 import { IndexValue } from './entities/index-value.entity'
+import { Cron } from '@nestjs/schedule'
+import { HR_DB_TIME_FORMAT, TZ_OPTIONS } from './helpers/time.helpers'
+import { round } from './helpers/number.helper'
 
 type GetParams = Record<string, string | number>
 const SPOT_BELPEX_NAME = 'Spot Belpex'
@@ -42,40 +45,52 @@ export class PricingService {
     }
   }
 
+  @Cron('0 10 * * * *')
   async loadIndexData() {
-    console.log(`Spot belpex id`, this._spotBelpex.id)
+    this._log.log(`retreiving Spot belpex index, id = ${this._spotBelpex.id}`)
+    const uri = axios.getUri({ url: this._url, params: this._urlParams })
+    const [error1, aResult] = await tryit(axios.get<SpotResult>)(uri)
+    if (error1) {
+      this._log.error(`unable to get Belpex values`)
+      console.error(error1)
+      return
+    }
+    const spotPrices = new TransformSpotResults(aResult.data, this._timeZone)
+    const em = this._em.fork()
+    const [error2, lastRec] = await tryit(() =>
+      em.findOne(IndexValue, { index: this._spotBelpex }, { orderBy: { startTime: 'DESC' } }),
+    )()
+    if (error2) {
+      this._log.error(`unable to retreive index values`)
+      console.error(error2)
+      return
+    }
 
-    const indexValues = []
-    try {
-      const uri = axios.getUri({ url: this._url, params: this._urlParams })
-      const aResult = await axios.get<SpotResult>(uri)
-      const spotPrices = new TransformedSpotResult(aResult.data, this._timeZone)
-      const lastValue = await this._em.findOne(
+    const lastKnowValueTime = lastRec ? lastRec.startTime : new Date(1970, 1)
+    const newPrices = spotPrices.data.filter(dp => isBefore(lastKnowValueTime, dp.startTime))
+
+    if (newPrices.length > 0) {
+      this._em.insertMany(
         IndexValue,
-        { index: this._spotBelpex },
-        { orderBy: { startTime: 'DESC' } },
+        newPrices.map(p => ({
+          startTime: p.startTime,
+          hrTime: format(p.startTime, HR_DB_TIME_FORMAT, TZ_OPTIONS),
+          endTime: addHours(p.startTime, 1),
+          price: round(p.price * 1000, 3),
+          index: this._spotBelpex,
+        })),
       )
-      const lastKnowValueTime = lastValue ? lastValue.startTime : new Date(1970, 1)
-      const newPrices = spotPrices.data.filter(dp => isBefore(lastKnowValueTime, dp.startTime))
-
-      if (newPrices.length > 0) {
-        this._em.insertMany(
-          IndexValue,
-          newPrices.map(p => ({
-            startTime: p.startTime,
-            endTime: addHours(p.startTime, 1),
-            price: p.price,
-            index: this._spotBelpex,
-          })),
-        )
-        await this._em.flush()
-        const tzOptions = { timeZone: 'Europe/Brussels' }
-        const dFrom = format(first(spotPrices.data).startTime, 'dd/MM/yy HH:mm', tzOptions)
-        const dTill = format(last(spotPrices.data).startTime, 'dd/MM/yy HH:mm', tzOptions)
-        console.log(`Loaded Sport Epex data from ${dFrom} - ${dTill}`)
+      const [error3] = await tryit(() => em.flush())()
+      if (error3) {
+        this._log.error(`unable to store index values`)
+        console.error(error3)
+        return
       }
-    } catch (error) {
-      console.log(error)
+
+      const dFrom = format(first(spotPrices.data).startTime, 'dd/MM/yy HH:mm', TZ_OPTIONS)
+      const dTill = format(last(spotPrices.data).startTime, 'dd/MM/yy HH:mm', TZ_OPTIONS)
+      const msg = `Loaded Sport Epex data from ${dFrom} - ${dTill}, save ${newPrices.length} to DB`
+      this._log.log(msg)
     }
   }
 
@@ -100,7 +115,7 @@ export interface SpotResult {
   updated: string
   data: Array<DataPoint>
 }
-export class TransformedSpotResult {
+export class TransformSpotResults {
   updated: Date
   data: Array<TransformedDataPoint>
 

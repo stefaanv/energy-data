@@ -21,7 +21,7 @@ exports.default = () => ({
     params: {
       currency: 'EUR',
       area: 'BE',
-      multiplier: 1,
+      multiplier: 1000,
       extra: 0,
       factor: 1,
       decimals: 5,

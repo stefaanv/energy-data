@@ -6,7 +6,7 @@ import { EnergyService } from './energy.service'
 import { BatteryOperationMode } from '../shared-models/charge-task.interface'
 import { ChargeTask } from './charge-task.class'
 import { EnergyData, HaCommService } from './ha-comms.service'
-import { isBetween } from '@src/helpers/time.helpers'
+import { HR_DB_TIME_FORMAT, TZ_OPTIONS, isBetween } from '@src/helpers/time.helpers'
 import { format } from 'date-fns-tz'
 import { get, tryit } from 'radash'
 import { EntityManager } from '@mikro-orm/sqlite'
@@ -103,18 +103,17 @@ export class MonitorService {
         this._log.warn(`monthly peak increaed to ${consumption}`)
       }
       const em = this._em.fork()
-      const [error, result] = await tryit(em.insert)(QuarterlyEntity, {
-        batterySoc: round(current.battery.soc),
-        gridConsumed: round(consumption),
-        gridProduced: round(production),
-        monthlyPeak: round(this._monthlyPeakConsumption),
-        startTime: now,
-        hrTime: format(now, QuarterlyEntity.dateTimeFormat, {
-          timeZone: QuarterlyEntity.timeZone,
+      const [error] = await tryit(() =>
+        em.insert(QuarterlyEntity, {
+          batterySoc: round(current.battery.soc),
+          gridConsumed: round(consumption),
+          gridProduced: round(production),
+          monthlyPeak: round(this._monthlyPeakConsumption),
+          startTime: now,
+          hrTime: format(now, HR_DB_TIME_FORMAT, TZ_OPTIONS),
         }),
-      })
-      if (error)
-        this._log.error(`unable to save quarterly energy values to the database: ${error.message}`)
+      )()
+      if (error) this._log.error(`unable to save quarterly energy values: ${error.message}`)
     } else {
       this._log.log(`getting initial quarter data`)
     }

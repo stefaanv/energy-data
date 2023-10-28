@@ -8,6 +8,7 @@ import { IndexValue } from './entities/index-value.entity'
 import { format } from 'date-fns-tz'
 import { EnergyService } from './energy-actions/energy.service'
 import { ChargeTask } from './energy-actions/charge-task.class'
+import { TZ_OPTIONS } from './helpers/time.helpers'
 
 @Controller()
 export class AppController {
@@ -67,7 +68,7 @@ function indexAsTable(values: IndexValue[]) {
     '<table><tr><th>startTime</th><th>value</th></tr>' +
     values
       .map(v => {
-        const fTime = format(v.startTime, 'd/MM HH:mm', { timeZone: 'Europe/Brussels' })
+        const fTime = format(v.startTime, 'd/MM HH:mm', TZ_OPTIONS)
         return `<tr><td>${fTime}</td><td>${v.price}</td></tr>`
       })
       .join('') +

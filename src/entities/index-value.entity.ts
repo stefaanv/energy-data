@@ -6,6 +6,9 @@ export class IndexValue {
   @PrimaryKey({ columnType: 'timestamp' })
   startTime!: Date
 
+  @Property({ columnType: 'varchar' })
+  hrTime!: string
+
   @ManyToOne(() => Index, { primary: true })
   index!: Index
 

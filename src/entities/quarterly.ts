@@ -2,9 +2,6 @@ import { Entity, Enum, PrimaryKey, Property } from '@mikro-orm/core'
 
 @Entity({ tableName: 'quarterly' })
 export class QuarterlyEntity {
-  static dateTimeFormat = 'd/M/yyyy HH:mm'
-  static timeZone = 'Europe/Brussels'
-
   @PrimaryKey({ columnType: 'timestamp' })
   startTime!: Date
 
