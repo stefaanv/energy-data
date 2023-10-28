@@ -84,7 +84,7 @@ export class MonitorService {
     }
   }
 
-  @Cron('* */15 * * * *')
+  @Cron('0 */15 * * * *')
   async everyQuarter() {
     const now = new Date()
     const current = await this._haCommService.getEnergyData()
@@ -105,10 +105,11 @@ export class MonitorService {
         this._log.warn(`monthly peak increaed to ${consumption}`)
       }
       const em = this._em.fork()
+      //TODO! afronden
       em.insert(QuarterlyEntity, {
         batterySoc: current.battery.soc,
-        consumed: consumption,
-        produced: production,
+        gridConsumed: consumption,
+        gridProduced: production,
         monthlyPeak: this._monthlyPeakConsumption,
         startTime: now,
         hrTime: format(now, QuarterlyEntity.dateTimeFormat, {

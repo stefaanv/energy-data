@@ -15,7 +15,7 @@ import { EnergyService } from './energy-actions/energy.service'
 import { MonitorService } from './energy-actions/monitoring.service'
 
 // Db tables updaten: https://mikro-orm.io/docs/schema-generator
-//npx mikro-orm schema:update --run
+// npm run build && npx mikro-orm schema:update --run
 const clientPath = resolve(__dirname, '..', 'client')
 console.log('clientPath', clientPath)
 @Module({
