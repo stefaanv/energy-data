@@ -46,7 +46,7 @@ interface HomeAssistantEntity {
 }
 
 @Injectable()
-export class HomeAssistantCommuncationService {
+export class HaCommService {
   private readonly _baseUrl: string
   private readonly _axiosOptions: any
   private readonly _haStopChargeConfig: CmdConfigBase

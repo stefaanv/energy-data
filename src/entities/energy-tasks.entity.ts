@@ -3,7 +3,7 @@ import {
   BatteryOperationMode,
   BatteryOperationModeValues,
   IChargeTask,
-} from 'src/shared-models/charge-task.interface'
+} from '@src/shared-models/charge-task.interface'
 
 @Entity({ tableName: 'charge-tasks' })
 export class ChargeTaskEntity implements IChargeTask {

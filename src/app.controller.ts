@@ -1,6 +1,6 @@
 import { Controller, Get, Inject, Param } from '@nestjs/common'
 import { AppService } from './app.service'
-import { HomeAssistantCommuncationService } from './energy-actions/home-assistant-communication.service'
+import { HaCommService } from './energy-actions/home-assistant-communication.service'
 import { PricingService } from './pricing.service'
 import { EntityManager } from '@mikro-orm/core'
 import { subDays } from 'date-fns'
@@ -13,7 +13,7 @@ import { ChargeTask } from './energy-actions/charge-task.class'
 export class AppController {
   constructor(
     private readonly _appService: AppService,
-    private readonly _haCommService: HomeAssistantCommuncationService,
+    private readonly _haCommService: HaCommService,
     private readonly _pricingService: PricingService,
     private readonly _energyService: EnergyService,
     private readonly _em: EntityManager,

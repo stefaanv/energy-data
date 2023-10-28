@@ -2,13 +2,13 @@ import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
 import { Injectable } from '@nestjs/common'
 // import { SchedulerRegistry } from '@nestjs/schedule'
 import { BatteryConfig, ChargeTask } from './charge-task.class'
-import { HomeAssistantCommuncationService } from './home-assistant-communication.service'
+import { HaCommService } from './home-assistant-communication.service'
 import { assign, sort } from 'radash'
 import { IChargeTask, chargeTaskSettingToString } from '../shared-models/charge-task.interface'
 import { differenceInSeconds, subHours } from 'date-fns'
-import { LoggerService } from 'src/logger.service'
+import { LoggerService } from '@src/logger.service'
 import { EntityManager, EntityRepository } from '@mikro-orm/core'
-import { ChargeTaskEntity } from 'src/entities/energy-tasks.entity'
+import { ChargeTaskEntity } from '@src/entities/energy-tasks.entity'
 
 @Injectable()
 export class EnergyService {

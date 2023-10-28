@@ -1,19 +1,17 @@
 import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
 import { Injectable } from '@nestjs/common'
 import { Cron, SchedulerRegistry } from '@nestjs/schedule'
-import { LoggerService } from 'src/logger.service'
+import { LoggerService } from '@src/logger.service'
 import { EnergyService } from './energy.service'
 import { BatteryOperationMode } from '../shared-models/charge-task.interface'
 import { ChargeTask } from './charge-task.class'
-import {
-  EnergyData,
-  HomeAssistantCommuncationService,
-} from './home-assistant-communication.service'
-import { isBetween } from 'src/helpers/time.helpers'
+import { EnergyData, HaCommService } from './home-assistant-communication.service'
+import { isBetween } from '@src/helpers/time.helpers'
 import { format } from 'date-fns-tz'
 import { get } from 'radash'
 import { EntityManager } from '@mikro-orm/sqlite'
-import { QuarterlyEntity } from 'src/entities/quarterly'
+import { QuarterlyEntity } from '@src/entities/quarterly'
+import { round } from '@src/helpers/number.helper'
 
 export interface BatteryOperationStatus {
   workingMode: BatteryOperationMode
@@ -47,7 +45,7 @@ export class MonitorService {
     private readonly _log: LoggerService,
     schedulerRegistry: SchedulerRegistry,
     private readonly _energyService: EnergyService,
-    private readonly _haCommService: HomeAssistantCommuncationService,
+    private readonly _haCommService: HaCommService,
     private readonly _em: EntityManager,
   ) {
     const fastPeriodMs = 1000 * config.get<number>('monitorIntervalSec')
@@ -107,10 +105,10 @@ export class MonitorService {
       const em = this._em.fork()
       //TODO! afronden
       em.insert(QuarterlyEntity, {
-        batterySoc: current.battery.soc,
-        gridConsumed: consumption,
-        gridProduced: production,
-        monthlyPeak: this._monthlyPeakConsumption,
+        batterySoc: round(current.battery.soc),
+        gridConsumed: round(consumption),
+        gridProduced: round(production),
+        monthlyPeak: round(this._monthlyPeakConsumption),
         startTime: now,
         hrTime: format(now, QuarterlyEntity.dateTimeFormat, {
           timeZone: QuarterlyEntity.timeZone,

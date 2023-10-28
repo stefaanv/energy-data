@@ -18,6 +18,10 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
-    "moduleResolution": "nodenext"
+    "moduleResolution": "nodenext",
+    "paths": {
+      "@src/*": ["./src/*"],
+      "@helpers/*": ["./src/helpers/*"]
+    }
   }
 }
