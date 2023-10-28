@@ -5,10 +5,10 @@ import { LoggerService } from '@src/logger.service'
 import { EnergyService } from './energy.service'
 import { BatteryOperationMode } from '../shared-models/charge-task.interface'
 import { ChargeTask } from './charge-task.class'
-import { EnergyData, HaCommService } from './home-assistant-communication.service'
+import { EnergyData, HaCommService } from './ha-comms.service'
 import { isBetween } from '@src/helpers/time.helpers'
 import { format } from 'date-fns-tz'
-import { get } from 'radash'
+import { get, tryit } from 'radash'
 import { EntityManager } from '@mikro-orm/sqlite'
 import { QuarterlyEntity } from '@src/entities/quarterly'
 import { round } from '@src/helpers/number.helper'
@@ -103,8 +103,7 @@ export class MonitorService {
         this._log.warn(`monthly peak increaed to ${consumption}`)
       }
       const em = this._em.fork()
-      //TODO! afronden
-      em.insert(QuarterlyEntity, {
+      const [error, result] = await tryit(em.insert)(QuarterlyEntity, {
         batterySoc: round(current.battery.soc),
         gridConsumed: round(consumption),
         gridProduced: round(production),
@@ -114,6 +113,8 @@ export class MonitorService {
           timeZone: QuarterlyEntity.timeZone,
         }),
       })
+      if (error)
+        this._log.error(`unable to save quarterly energy values to the database: ${error.message}`)
     } else {
       this._log.log(`getting initial quarter data`)
     }
