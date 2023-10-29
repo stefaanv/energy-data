@@ -15,16 +15,12 @@ export class ChargeTask {
   public readonly _power: number
   public readonly _target?: number
   private readonly _powerLimit: number
-  public commandSent: boolean
 
   constructor(public setting: IChargeTask) {
     const config = ChargeTask.config
-    this._target = !setting.target
-      ? undefined
-      : Math.min(Math.max(setting.target ?? 0, config.lowerSocLimit), config.upperSocLimit)
+    this._target = !setting.target ? undefined : Math.min(Math.max(setting.target ?? 0, config.lowerSocLimit), config.upperSocLimit)
     this._powerLimit = setting.mode === 'charge' ? config.maxChargePower : config.maxDischargePower
     this._power = Math.max(0, Math.min(setting.power, this._powerLimit))
-    this.commandSent = false
 
     if (setting.from >= setting.till) throw new Error('from must be before till')
   }
@@ -46,13 +42,7 @@ export class ChargeTask {
     const setting = this.setting
     // Target gedefinieerd
     // Niets doen wanneer het target al overschreden is
-    if (
-      (setting.mode === 'charge' &&
-        ((currentSOC > setting.holdOff ?? 100) || currentSOC > this._target)) ||
-      (setting.mode === 'discharge' &&
-        ((currentSOC < setting.holdOff ?? 0) || currentSOC < this._target))
-    )
-      return undefined
+    if ((setting.mode === 'charge' && ((currentSOC > setting.holdOff ?? 100) || currentSOC > this._target)) || (setting.mode === 'discharge' && ((currentSOC < setting.holdOff ?? 0) || currentSOC < this._target))) return undefined
 
     const sign = setting.mode === 'charge' ? +1 : -1
 
@@ -64,9 +54,7 @@ export class ChargeTask {
     const socDifference = this._target - currentSOC
     const energy = socDifference * ChargeTask.config.capacity * 10
     const power = energy / this.periodInHours(now)
-    return setting.mode === 'charge'
-      ? Math.min(power, this._powerLimit)
-      : Math.max(power, -this._powerLimit)
+    return setting.mode === 'charge' ? Math.min(power, this._powerLimit) : Math.max(power, -this._powerLimit)
   }
 
   isWithinPeriod(time: Date) {
@@ -78,7 +66,6 @@ export class ChargeTask {
   }
 
   get target() {
-    return
     return this._target
   }
 }

@@ -1,4 +1,4 @@
-import { Entity, ManyToOne, PrimaryKey, Property } from '@mikro-orm/core'
+import { Entity, ManyToOne, PrimaryKey, PrimaryKeyType, Property } from '@mikro-orm/core'
 import { Index } from './index.entity'
 
 @Entity({ tableName: 'index-values' })
@@ -16,5 +16,7 @@ export class IndexValue {
   endTime!: Date
 
   @Property({ columnType: 'real' })
-  price!: number
+  price!: number;
+
+  [PrimaryKeyType]?: [Date, number]
 }

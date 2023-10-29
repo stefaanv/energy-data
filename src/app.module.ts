@@ -6,12 +6,12 @@ import { configValidationSchema } from './config-validator.joi'
 import { LoggerService } from './logger.service'
 import { ScheduleModule } from '@nestjs/schedule'
 import { HaCommService } from './energy-actions/ha-comms.service'
-import { PricingService } from './pricing.service'
+import { PricingService } from './pricing/pricing.service'
 import { MikroOrmModule } from '@mikro-orm/nestjs'
 import { ServeStaticModule } from '@nestjs/serve-static'
 import { resolve } from 'path'
 import { EnergyController } from './energy-actions/energy.controller'
-import { EnergyService } from './energy-actions/energy.service'
+import { EnergyTasksService } from './energy-actions/energy-tasks.service'
 import { MonitorService } from './energy-actions/monitoring.service'
 
 // Db tables updaten: https://mikro-orm.io/docs/schema-generator
@@ -41,14 +41,7 @@ console.log('clientPath', clientPath)
     }),
   ],
   controllers: [AppController, EnergyController],
-  providers: [
-    AppService,
-    LoggerService,
-    HaCommService,
-    MonitorService,
-    PricingService,
-    EnergyService,
-  ],
+  providers: [AppService, LoggerService, HaCommService, MonitorService, PricingService, EnergyTasksService],
   exports: [LoggerService, ConfigModule],
 })
 export class AppModule {}

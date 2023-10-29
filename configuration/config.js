@@ -1,11 +1,9 @@
-const { parse } = require('date-fns')
 const DT_FORMAT = 'dd/MM/yyyy HH:mm'
 const now = new Date()
 
 exports.default = () => ({
   activateCommandKeyWatcher: false,
   batteryMonitorInterval: 10,
-  monitorIntervalSec: 30,
   minMonthlyPeakWh: 625,
   timeZone: 'Europe/Brussels',
   haDryRun: true,

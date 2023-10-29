@@ -1,12 +1,12 @@
 import { Controller, Get, Inject, Param } from '@nestjs/common'
 import { AppService } from './app.service'
 import { HaCommService } from './energy-actions/ha-comms.service'
-import { PricingService } from './pricing.service'
+import { PricingService } from './pricing/pricing.service'
 import { EntityManager } from '@mikro-orm/core'
 import { subDays } from 'date-fns'
 import { IndexValue } from './entities/index-value.entity'
 import { format } from 'date-fns-tz'
-import { EnergyService } from './energy-actions/energy.service'
+import { EnergyTasksService } from './energy-actions/energy-tasks.service'
 import { ChargeTask } from './energy-actions/charge-task.class'
 import { TZ_OPTIONS } from './helpers/time.helpers'
 
@@ -16,7 +16,7 @@ export class AppController {
     private readonly _appService: AppService,
     private readonly _haCommService: HaCommService,
     private readonly _pricingService: PricingService,
-    private readonly _energyService: EnergyService,
+    private readonly _energyService: EnergyTasksService,
     private readonly _em: EntityManager,
   ) {}
 
@@ -82,10 +82,7 @@ function tasksAsTable(tasks: ChargeTask[]) {
     '<table><tr><th>dag</th><th>start</th><th>einde</th><th>mode</th><th>vermogen</th></tr>' +
     tasks
       .map(t => {
-        return (
-          `<tr><td>${t.setting.from.toString()}</td><td>${t.setting.till.toString()}` +
-          `</td><td>${t.setting.mode}</td><td>${t.setting.power}</td></tr>`
-        )
+        return `<tr><td>${t.setting.from.toString()}</td><td>${t.setting.till.toString()}` + `</td><td>${t.setting.mode}</td><td>${t.setting.power}</td></tr>`
       })
       .join('') +
     '</table>'

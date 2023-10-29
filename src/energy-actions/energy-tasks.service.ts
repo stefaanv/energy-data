@@ -1,8 +1,6 @@
 import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
 import { Injectable } from '@nestjs/common'
-// import { SchedulerRegistry } from '@nestjs/schedule'
 import { BatteryConfig, ChargeTask } from './charge-task.class'
-import { HaCommService } from './ha-comms.service'
 import { assign, sort } from 'radash'
 import { IChargeTask, chargeTaskSettingToString } from '../shared-models/charge-task.interface'
 import { differenceInSeconds, subHours } from 'date-fns'
@@ -11,23 +9,18 @@ import { EntityManager, EntityRepository } from '@mikro-orm/core'
 import { ChargeTaskEntity } from '@src/entities/energy-tasks.entity'
 
 @Injectable()
-export class EnergyService {
+export class EnergyTasksService {
   private _taskListProxy: () => Array<IChargeTask>
   private _taskListRepo: EntityRepository<ChargeTaskEntity>
 
   constructor(
     config: ConfigService,
-    // private _schedulerRegistry: SchedulerRegistry,
-    // private readonly _commService: HomeAssistantCommuncationService,
     private readonly _log: LoggerService,
     private readonly _em: EntityManager,
   ) {
     this._taskListRepo = this._em.getRepository(ChargeTaskEntity)
     ChargeTask.config = config.get<BatteryConfig>('batteryConfig')
     this._taskListProxy = config.createProxy<Array<IChargeTask>>('taskList')
-    // const schedulerPeriodMs = 1000 * config.get<number>('batteryMonitorInterval')
-    // const schedulerInterval = setInterval(() => this.monitor(), schedulerPeriodMs)
-    // this._schedulerRegistry.addInterval('monitorInterval', schedulerInterval)
     this.loadTaskListFromConfig()
     config.on('reloaded', () => this.loadTaskListFromConfig())
   }
@@ -64,7 +57,8 @@ export class EnergyService {
   async allTasks(since: Date = subHours(new Date(), 12)) {
     const em = this._em.fork()
     const taskListRepo = em.getRepository(ChargeTaskEntity)
-    return taskListRepo.find({ from: { $gt: since } }, { orderBy: { from: 'asc' } })
+    const allTasks = await taskListRepo.find({ from: { $gt: since } }, { orderBy: { from: 'asc' } })
+    return allTasks
   }
 
   async addTask(newTask: IChargeTask) {
@@ -83,22 +77,4 @@ export class EnergyService {
     await this._em.nativeDelete(ChargeTaskEntity, { id })
     this.printTaskList()
   }
-
-  /*
-  async monitor() {
-    const now = new Date()
-    const em = this._em.fork()
-    const taskList = await em.find(ChargeTaskEntity, { from: { $gt: now } })
-
-    for (const t of taskList) {
-      const task = new ChargeTask(t)
-      if (task.isWithinPeriod(now) && !task.commandSent) {
-        const duration = task.periodInMinutes()
-        const sign = task.setting.mode === 'charge' ? 1 : -1
-        this._commService.startForcibly(sign * task._power, duration)
-        task.commandSent = true
-      }
-    }
-  }
-  */
 }

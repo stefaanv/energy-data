@@ -3,6 +3,8 @@ import { Injectable } from '@nestjs/common'
 import * as axios from 'axios'
 import { LoggerService } from '../logger.service'
 import { select, sum } from 'radash'
+import { format } from 'date-fns-tz'
+import { TZ_OPTIONS } from '@src/helpers/time.helpers'
 
 interface CmdConfigBase {
   url: string
@@ -65,24 +67,15 @@ export class HaCommService {
     const headers = { Authorization: `Bearer ${bearer}` }
     this._axiosOptions = { baseURL: this._baseUrl, headers }
 
-    this._haStopChargeConfig = config.get<CmdConfigBase>(
-      'homeAssistant.commands.stopForciblyChargeDischarge',
-    )
+    this._haStopChargeConfig = config.get<CmdConfigBase>('homeAssistant.commands.stopForciblyChargeDischarge')
     this._haForciblyChargeConfig = config.get<ChgCmdConfig>('homeAssistant.commands.forciblyCharge')
-    this._haForciblyDischargeConfig = config.get<ChgCmdConfig>(
-      'homeAssistant.commands.forciblyDischarge',
-    )
+    this._haForciblyDischargeConfig = config.get<ChgCmdConfig>('homeAssistant.commands.forciblyDischarge')
     this._haSmartMeterIds = config.get<SmartMeterIds>('homeAssistant.sensors.smartMeter')
     this._haInverterIds = config.get<InverterIds>('homeAssistant.sensors.inverter')
     this._dryRunProxy = config.createProxy('')
   }
 
-  async getEnergyData(): Promise<EnergyData> {
-    const sumSelect = (a: HomeAssistantEntity[], ids: string[]) =>
-      sum(
-        a.filter(e => ids.includes(e.entity_id)),
-        e => parseFloat(e.state),
-      )
+  async getEnergyData(): Promise<EnergyData | undefined> {
     const time = new Date()
     const smConfig = this._haSmartMeterIds
     const invConfig = this._haInverterIds
@@ -112,7 +105,9 @@ export class HaCommService {
         },
       }
     } catch (error) {
-      console.log(error)
+      this._log.error(`unable to get HA energy data: ${error.message}`)
+      console.error(error)
+      return undefined
     }
   }
 
@@ -125,12 +120,15 @@ export class HaCommService {
     const url = this._baseUrl + '/' + config.url
     try {
       await axios.post(url, config.postData, this._axiosOptions)
+      const date = format(new Date(), 'd/MM HH:mm', TZ_OPTIONS)
+      const msg = `Stopped forcibly charge/discharge at ${date}`
+      this._log.log(msg)
     } catch (error) {
       console.log(error)
     }
   }
 
-  async startForcibly(/** in Watt */ power: number, /** in minutes */ time: number) {
+  async startForcibly(/** in Watt */ power: number, /** in minutes */ duration: number) {
     if (this._dryRunProxy()) {
       this._log.warn(`dryRun active - not starting`)
       return
@@ -141,12 +139,26 @@ export class HaCommService {
     const postData = config.postData
     const powerInWatt = Math.abs(power * config.wattToPowerMultiplier)
     postData[config.powerKey] = powerInWatt
-    const periodInMin = time * config.minutesToDurationMultiplier
+    const periodInMin = duration * config.minutesToDurationMultiplier
     postData[config.durationKey] = periodInMin
     try {
       await axios.post(url, config.postData, this._axiosOptions)
+      const date = format(new Date(), 'd/MM HH:mm', TZ_OPTIONS)
+      const mode = power > 0 ? 'charge' : 'discharge'
+      const msg = `Started ${Math.abs(power)}W forcibly ${mode} for ${duration} minutes at ${date}`
+      this._log.log(msg)
     } catch (error) {
-      console.error(error.message)
+      this._log.error(error.message)
+      console.error(error)
     }
   }
+}
+
+function sumSelect(a: HomeAssistantEntity[], ids: string[]): number | null {
+  const addition = sum(
+    a.filter(e => ids.includes(e.entity_id)),
+    e => parseFloat(e.state),
+  )
+  if (isNaN(addition)) return null
+  return addition
 }

@@ -1,17 +1,17 @@
 import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
 import { Injectable } from '@nestjs/common'
 import * as axios from 'axios'
-import { BELPEX_CKEY, BELPEX_URL_CKEY, BELPEX_PARAMS_CKEY } from './config-validator.joi'
-import { LoggerService } from './logger.service'
-import { addHours, isBefore, parseISO } from 'date-fns'
+import { BELPEX_CKEY, BELPEX_URL_CKEY, BELPEX_PARAMS_CKEY } from '../config-validator.joi'
+import { LoggerService } from '../logger.service'
+import { addHours, isBefore, parseISO, subHours } from 'date-fns'
 import { format, utcToZonedTime } from 'date-fns-tz'
 import { first, last, tryit } from 'radash'
 import { EntityManager } from '@mikro-orm/core'
-import { Index } from './entities/index.entity'
-import { IndexValue } from './entities/index-value.entity'
+import { Index } from '../entities/index.entity'
+import { IndexValue } from '../entities/index-value.entity'
 import { Cron } from '@nestjs/schedule'
-import { HR_DB_TIME_FORMAT, TZ_OPTIONS } from './helpers/time.helpers'
-import { round } from './helpers/number.helper'
+import { HR_DB_TIME_FORMAT, TZ_OPTIONS } from '../helpers/time.helpers'
+import { round } from '../helpers/number.helper'
 
 type GetParams = Record<string, string | number>
 const SPOT_BELPEX_NAME = 'Spot Belpex'
@@ -45,7 +45,7 @@ export class PricingService {
     }
   }
 
-  @Cron('0 10 * * * *')
+  @Cron('0 10 14-23/2 * * *')
   async loadIndexData() {
     this._log.log(`retreiving Spot belpex index, id = ${this._spotBelpex.id}`)
     const uri = axios.getUri({ url: this._url, params: this._urlParams })
@@ -57,9 +57,7 @@ export class PricingService {
     }
     const spotPrices = new TransformSpotResults(aResult.data, this._timeZone)
     const em = this._em.fork()
-    const [error2, lastRec] = await tryit(() =>
-      em.findOne(IndexValue, { index: this._spotBelpex }, { orderBy: { startTime: 'DESC' } }),
-    )()
+    const [error2, lastRec] = await tryit(() => em.findOne(IndexValue, { index: this._spotBelpex }, { orderBy: { startTime: 'DESC' } }))()
     if (error2) {
       this._log.error(`unable to retreive index values`)
       console.error(error2)
@@ -70,16 +68,15 @@ export class PricingService {
     const newPrices = spotPrices.data.filter(dp => isBefore(lastKnowValueTime, dp.startTime))
 
     if (newPrices.length > 0) {
-      this._em.insertMany(
-        IndexValue,
-        newPrices.map(p => ({
-          startTime: p.startTime,
-          hrTime: format(p.startTime, HR_DB_TIME_FORMAT, TZ_OPTIONS),
-          endTime: addHours(p.startTime, 1),
-          price: round(p.price * 1000, 3),
+      for (const price of newPrices) {
+        const result = await em.upsert(IndexValue, {
+          startTime: price.startTime,
+          hrTime: format(price.startTime, HR_DB_TIME_FORMAT, TZ_OPTIONS),
+          endTime: addHours(price.startTime, 1),
+          price: round(price.price, 3),
           index: this._spotBelpex,
-        })),
-      )
+        })
+      }
       const [error3] = await tryit(() => em.flush())()
       if (error3) {
         this._log.error(`unable to store index values`)
@@ -94,11 +91,13 @@ export class PricingService {
     }
   }
 
-  public async getBelpexSince(date: Date): Promise<IndexValue[]> {
-    const allBelpex = this._em.find(IndexValue, {
-      /*startTime: { $lt: date }*/
-    })
-    return allBelpex
+  public async getBelpexSince(now: Date = subHours(new Date(), 1)): Promise<IndexValue[]> {
+    const [error, recs] = await tryit(() => this._em.findOne(IndexValue, { index: this._spotBelpex, startTime: { $gt: now } }, { orderBy: { startTime: 'DESC' } }))()
+    if (error) {
+      this._log.error(`unable to retreive prices`)
+      console.error(error)
+      return
+    }
   }
 }
 
