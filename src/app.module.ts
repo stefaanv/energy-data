@@ -13,6 +13,7 @@ import { resolve } from 'path'
 import { EnergyController } from './energy-actions/energy.controller'
 import { EnergyTasksService } from './energy-actions/energy-tasks.service'
 import { MonitorService } from './energy-actions/monitoring.service'
+import { PricingController } from './pricing/pricing.controller'
 
 // Db tables updaten: https://mikro-orm.io/docs/schema-generator
 // npm run build && npx mikro-orm schema:update --run
@@ -40,7 +41,7 @@ console.log('clientPath', clientPath)
       rootPath: clientPath,
     }),
   ],
-  controllers: [AppController, EnergyController],
+  controllers: [AppController, EnergyController, PricingController],
   providers: [AppService, LoggerService, HaCommService, MonitorService, PricingService, EnergyTasksService],
   exports: [LoggerService, ConfigModule],
 })

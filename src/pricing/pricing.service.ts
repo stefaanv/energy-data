@@ -91,13 +91,14 @@ export class PricingService {
     }
   }
 
-  public async getBelpexSince(now: Date = subHours(new Date(), 1)): Promise<IndexValue[]> {
-    const [error, recs] = await tryit(() => this._em.findOne(IndexValue, { index: this._spotBelpex, startTime: { $gt: now } }, { orderBy: { startTime: 'DESC' } }))()
+  public async getBelpexSince(since: Date = subHours(new Date(), 1)) {
+    const [error, recs]: [Error, IndexValue[]] = await tryit(() => this._em.find(IndexValue, { index: this._spotBelpex, startTime: { $gt: since } }, { orderBy: { startTime: 'DESC' } }))()
     if (error) {
       this._log.error(`unable to retreive prices`)
       console.error(error)
       return
     }
+    return recs.map(pp => ({ price: pp.price, startTime: pp.startTime, hrStart: pp.hrTime }))
   }
 }
 

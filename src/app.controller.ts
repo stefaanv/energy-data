@@ -47,20 +47,6 @@ export class AppController {
   getSmartMeterData() {
     return this._haCommService.getEnergyData()
   }
-
-  @Get('belpex')
-  async getBelpex() {
-    const twoDaysAgo = subDays(new Date(), 2)
-    const json = await this._pricingService.getBelpexSince(twoDaysAgo)
-    const ashtml = indexAsTable(json)
-    return ashtml
-  }
-
-  @Get('pricing')
-  async getPricing() {
-    this._pricingService.loadIndexData()
-    return 'OK'
-  }
 }
 
 function indexAsTable(values: IndexValue[]) {
