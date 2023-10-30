@@ -5,14 +5,11 @@ import { subHours } from 'date-fns'
 
 @Controller('pricing')
 export class PricingController {
-  constructor(
-    private readonly _pricingService: PricingService,
-    private readonly _em: EntityManager,
-  ) {}
+  constructor(private readonly _pricingService: PricingService) {}
 
   @Get()
   async getPricing() {
-    const since = subHours(new Date(), 2)
+    const since = subHours(new Date(), 8)
     return this._pricingService.getBelpexSince(since)
   }
 

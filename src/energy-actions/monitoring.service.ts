@@ -5,13 +5,14 @@ import { LoggerService } from '@src/logger.service'
 import { EnergyTasksService } from './energy-tasks.service'
 import { BatteryOperationMode } from '../shared-models/charge-task.interface'
 import { ChargeTask } from './charge-task.class'
-import { EnergyData, HaCommService } from './ha-comms.service'
+import { HaCommService } from '../home-assistant/ha-comms.service'
 import { HR_DB_TIME_FORMAT, TZ_OPTIONS, isBetween } from '@src/helpers/time.helpers'
 import { format } from 'date-fns-tz'
 import { get, tryit } from 'radash'
 import { EntityManager } from '@mikro-orm/sqlite'
 import { QuarterlyEntity } from '@src/entities/quarterly'
 import { round } from '@src/helpers/number.helper'
+import { EnergyData } from '@src/home-assistant/energy-data.model'
 
 const PROD_KEY = 'energy.production'
 const CONS_KEY = 'energy.consumption'
@@ -90,7 +91,10 @@ export class MonitorService {
       if (task.isWithinPeriod(now)) {
         const duration = task.periodInMinutes()
         const power = (task.setting.mode === 'charge' ? 1 : -1) * task._power
-        if (!isCloseTo(power, this._currentStatus.setPower) || this._currentStatus.workingMode !== task.setting.mode) {
+        if (
+          !isCloseTo(power, this._currentStatus.setPower) ||
+          this._currentStatus.workingMode !== task.setting.mode
+        ) {
           await this._haCommService.startForcibly(power, duration)
           this.setStatus(task.setting.mode, power, duration)
         }
@@ -107,8 +111,8 @@ export class MonitorService {
   async everyQuarter(current: LocalEnergyData) {
     const now = new Date()
     const peak = (current.allData.energy.monthlyPeak = this._monthlyPeakConsumption)
-    const consumption = current.allData.energy.consumption
-    const production = current.allData.energy.production
+    const consumption = current.consumptionInQuarter
+    const production = current.productionInQuarter
 
     if (this._startQuarterValues) {
       const timeF = format(now, 'HH:mm')
@@ -120,10 +124,10 @@ export class MonitorService {
       const em = this._em.fork()
       const [error] = await tryit(() =>
         em.insert(QuarterlyEntity, {
-          batterySoc: round(current.allData.battery.soc) ?? null,
-          gridConsumed: round(consumption) ?? null,
-          gridProduced: round(production) ?? null,
-          monthlyPeak: round(this._monthlyPeakConsumption) ?? null,
+          batterySoc: round(current.allData.battery.soc) ?? -1,
+          gridConsumed: round(consumption) ?? -1,
+          gridProduced: round(production) ?? -1,
+          monthlyPeak: round(this._monthlyPeakConsumption) ?? -1,
           startTime: now,
           hrTime: format(now, HR_DB_TIME_FORMAT, TZ_OPTIONS),
         }),
@@ -140,15 +144,16 @@ export class MonitorService {
     const allData = await this._haCommService.getEnergyData()
     if (!allData) return undefined
     const prodDiff = get<number>(allData, PROD_KEY) - get<number>(this._startQuarterValues, PROD_KEY)
-    const prodInQuarter = round(1000 * prodDiff, 0)
+    const productionInQuarter = round(1000 * prodDiff, 0) ?? -1
     const consDiff = get<number>(allData, CONS_KEY) - get<number>(this._startQuarterValues, CONS_KEY)
-    const consInQuarter = round(1000 * consDiff, 0)
+    const consumptionInQuarter = round(1000 * consDiff, 0) ?? -1
+    console.log(`productionInQuarter`, productionInQuarter, `consumptionInQuarter`, consumptionInQuarter)
 
     return {
       time,
       allData,
-      productionInQuarter: prodInQuarter,
-      consumptionInQuarter: consInQuarter,
+      productionInQuarter,
+      consumptionInQuarter,
     }
   }
 

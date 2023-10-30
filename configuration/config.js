@@ -6,7 +6,7 @@ exports.default = () => ({
   batteryMonitorInterval: 10,
   minMonthlyPeakWh: 625,
   timeZone: 'Europe/Brussels',
-  haDryRun: true,
+  haDryRun: false,
   batteryConfig: {
     capacity: 10,
     maxChargePower: 5000,
@@ -26,7 +26,7 @@ exports.default = () => ({
     },
   },
   homeAssistant: {
-    baseUrl: 'http://homeassistant.local:8123/api',
+    baseUrl: 'http://192.168.0.3:8123/api',
     bearerToken: '{{ENV_BEARER_TOKEN}}',
     servicesUrl: '/services',
     commands: {

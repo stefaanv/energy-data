@@ -1,6 +1,6 @@
 import { Controller, Get, Inject, Param } from '@nestjs/common'
 import { AppService } from './app.service'
-import { HaCommService } from './energy-actions/ha-comms.service'
+import { HaCommService } from './home-assistant/ha-comms.service'
 import { PricingService } from './pricing/pricing.service'
 import { EntityManager } from '@mikro-orm/core'
 import { subDays } from 'date-fns'

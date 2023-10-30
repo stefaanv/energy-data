@@ -12,6 +12,7 @@ import { IndexValue } from '../entities/index-value.entity'
 import { Cron } from '@nestjs/schedule'
 import { HR_DB_TIME_FORMAT, TZ_OPTIONS } from '../helpers/time.helpers'
 import { round } from '../helpers/number.helper'
+import { PricePoint } from '@src/shared-models/price-point.interface'
 
 type GetParams = Record<string, string | number>
 const SPOT_BELPEX_NAME = 'Spot Belpex'
@@ -91,7 +92,7 @@ export class PricingService {
     }
   }
 
-  public async getBelpexSince(since: Date = subHours(new Date(), 1)) {
+  public async getBelpexSince(since: Date = subHours(new Date(), 8)): Promise<PricePoint[]> {
     const [error, recs]: [Error, IndexValue[]] = await tryit(() => this._em.find(IndexValue, { index: this._spotBelpex, startTime: { $gt: since } }, { orderBy: { startTime: 'DESC' } }))()
     if (error) {
       this._log.error(`unable to retreive prices`)

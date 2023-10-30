@@ -2,9 +2,10 @@ import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
 import { Injectable } from '@nestjs/common'
 import * as axios from 'axios'
 import { LoggerService } from '../logger.service'
-import { select, sum } from 'radash'
+import { sum } from 'radash'
 import { format } from 'date-fns-tz'
 import { TZ_OPTIONS } from '@src/helpers/time.helpers'
+import { EnergyData } from './energy-data.model'
 
 interface CmdConfigBase {
   url: string
@@ -24,15 +25,6 @@ interface InverterIds {
   chargePower: string
   inputPower: string
   pmActivePower: string
-}
-
-export interface EnergyData {
-  time: Date
-  power: { consumption: number; production: number }
-  energy: { consumption: number; production: number; monthlyPeak?: number }
-  battery: { soc: number; chargePower: number }
-  inverter: { inputPower: number }
-  grid: { power: number }
 }
 
 interface ChgCmdConfig extends CmdConfigBase {
@@ -57,6 +49,8 @@ export class HaCommService {
   private readonly _haSmartMeterIds: SmartMeterIds
   private readonly _haInverterIds: InverterIds
   private readonly _dryRunProxy: () => boolean
+  private readonly _allSensorIds: string[]
+  private _lastValid: EnergyData = undefined
 
   constructor(
     config: ConfigService,
@@ -72,41 +66,56 @@ export class HaCommService {
     this._haForciblyDischargeConfig = config.get<ChgCmdConfig>('homeAssistant.commands.forciblyDischarge')
     this._haSmartMeterIds = config.get<SmartMeterIds>('homeAssistant.sensors.smartMeter')
     this._haInverterIds = config.get<InverterIds>('homeAssistant.sensors.inverter')
-    this._dryRunProxy = config.createProxy('')
+    this._dryRunProxy = config.createProxy<boolean>('haDryRun', true)
+    this._allSensorIds = [
+      ...Object.values(this._haSmartMeterIds).flat(),
+      ...Object.values(this._haInverterIds).flat(),
+    ]
   }
 
   async getEnergyData(): Promise<EnergyData | undefined> {
     const time = new Date()
     const smConfig = this._haSmartMeterIds
     const invConfig = this._haInverterIds
-    const baseUrl = this._baseUrl + '/states'
+    const url = this._baseUrl + '/states'
     try {
-      const allStates = (await axios.get<HomeAssistantEntity[]>(baseUrl, this._axiosOptions)).data
+      const allStates = (await axios.get<HomeAssistantEntity[]>(url, this._axiosOptions)).data.filter(s =>
+        this._allSensorIds.includes(s.entity_id),
+      )
 
-      return {
+      //TODO! er niet alle waarden komen altijf door vanuit HA
+      // {"time":"2023-10-30T11:48:00.011Z","power":{"production":0,"consumption":1.389},"energy":{"production":4725.201,"consumption":3885.562},"battery":{"soc":null,"chargePower":null},"inverter":{"inputPower":null},"grid":{"power":null}}
+      // Laatste geldige waarden bijhouden en meegeven indien geen geldige gekregen
+      const data = {
         time,
         power: {
-          production: sumSelect(allStates, [smConfig.powerProduction]),
-          consumption: sumSelect(allStates, [smConfig.powerConsumption]),
+          production: sumSelect(allStates, [smConfig.powerProduction]) ?? this._lastValid.power.production,
+          consumption: sumSelect(allStates, [smConfig.powerConsumption]) ?? this._lastValid.power.consumption,
         },
         energy: {
-          production: sumSelect(allStates, smConfig.productionEntity),
-          consumption: sumSelect(allStates, smConfig.consumptionEntity),
+          production: sumSelect(allStates, smConfig.productionEntity) ?? this._lastValid.energy.production,
+          consumption: sumSelect(allStates, smConfig.consumptionEntity) ?? this._lastValid.energy.consumption,
         },
         battery: {
-          soc: sumSelect(allStates, [invConfig.batterySoc]),
-          chargePower: sumSelect(allStates, [invConfig.chargePower]),
+          soc: sumSelect(allStates, [invConfig.batterySoc]) ?? this._lastValid.battery.soc,
+          chargePower: sumSelect(allStates, [invConfig.chargePower]) ?? this._lastValid.battery.chargePower,
         },
         inverter: {
-          inputPower: sumSelect(allStates, [invConfig.inputPower]),
+          inputPower: sumSelect(allStates, [invConfig.inputPower]) ?? this._lastValid.inverter.inputPower,
         },
         grid: {
-          power: sumSelect(allStates, [invConfig.pmActivePower]),
+          power: sumSelect(allStates, [invConfig.pmActivePower]) ?? this._lastValid.grid.power,
         },
       }
+      if (!this._lastValid) {
+        this._log.log(`set this._lastValid to ${JSON.stringify(data)}`)
+        this._lastValid = data
+      }
+
+      return data
     } catch (error) {
       this._log.error(`unable to get HA energy data: ${error.message}`)
-      console.error(error)
+      console.error('url:', url)
       return undefined
     }
   }
@@ -149,16 +158,17 @@ export class HaCommService {
       this._log.log(msg)
     } catch (error) {
       this._log.error(error.message)
-      console.error(error)
+      console.error('url:', url)
+      console.error('body:', config.postData)
     }
   }
 }
 
-function sumSelect(a: HomeAssistantEntity[], ids: string[]): number | null {
+function sumSelect(a: HomeAssistantEntity[], ids: string[]): number | undefined {
   const addition = sum(
     a.filter(e => ids.includes(e.entity_id)),
     e => parseFloat(e.state),
   )
-  if (isNaN(addition)) return null
+  if (isNaN(addition)) return undefined
   return addition
 }
