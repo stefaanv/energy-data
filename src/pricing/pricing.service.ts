@@ -52,16 +52,16 @@ export class PricingService {
     const uri = axios.getUri({ url: this._url, params: this._urlParams })
     const [error1, aResult] = await tryit(axios.get<SpotResult>)(uri)
     if (error1) {
-      this._log.error(`unable to get Belpex values`)
-      console.error(error1)
+      this._log.error(`unable to get Belpex values: ${error1.message}`)
       return
     }
     const spotPrices = new TransformSpotResults(aResult.data, this._timeZone)
     const em = this._em.fork()
-    const [error2, lastRec] = await tryit(() => em.findOne(IndexValue, { index: this._spotBelpex }, { orderBy: { startTime: 'DESC' } }))()
+    const [error2, lastRec] = await tryit(() =>
+      em.findOne(IndexValue, { index: this._spotBelpex }, { orderBy: { startTime: 'DESC' } }),
+    )()
     if (error2) {
       this._log.error(`unable to retreive index values`)
-      console.error(error2)
       return
     }
 
@@ -93,7 +93,13 @@ export class PricingService {
   }
 
   public async getBelpexSince(since: Date = subHours(new Date(), 8)): Promise<PricePoint[]> {
-    const [error, recs]: [Error, IndexValue[]] = await tryit(() => this._em.find(IndexValue, { index: this._spotBelpex, startTime: { $gt: since } }, { orderBy: { startTime: 'DESC' } }))()
+    const [error, recs]: [Error, IndexValue[]] = await tryit(() =>
+      this._em.find(
+        IndexValue,
+        { index: this._spotBelpex, startTime: { $gt: since } },
+        { orderBy: { startTime: 'DESC' } },
+      ),
+    )()
     if (error) {
       this._log.error(`unable to retreive prices`)
       console.error(error)

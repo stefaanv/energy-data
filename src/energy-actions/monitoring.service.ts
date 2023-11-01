@@ -24,7 +24,7 @@ export interface BatteryOperationStatus {
   duration: number
 }
 
-interface LocalEnergyData {
+export interface LocalEnergyData {
   time: Date
   allData?: EnergyData
   productionInQuarter: number
@@ -49,6 +49,7 @@ export class MonitorService {
   private _currentStatus: BatteryOperationStatus
   private _startQuarterValues: EnergyData
   private _monthlyPeakConsumption: number
+  private _lastEnergyData: LocalEnergyData
   private _minMonthlyPeakConsumption: number
 
   constructor(
@@ -70,6 +71,7 @@ export class MonitorService {
       this._log.error(`undefined returned by MonitorService.getCurrentEnergyData()`)
       return
     }
+    this._lastEnergyData = current
     const now = current.time
     if (now.getMinutes() % 15 === 0 && (now.getSeconds() < 2 || now.getSeconds() > 58)) {
       this.everyQuarter(current)
@@ -106,6 +108,14 @@ export class MonitorService {
     this._currentStatus.setPower = power
     this._currentStatus.workingMode = mode
     this._currentStatus.duration = duration
+  }
+
+  get status() {
+    return this._currentStatus
+  }
+
+  get currentEnergyData() {
+    return this._lastEnergyData
   }
 
   async everyQuarter(current: LocalEnergyData) {
@@ -147,7 +157,7 @@ export class MonitorService {
     const productionInQuarter = round(1000 * prodDiff, 0) ?? -1
     const consDiff = get<number>(allData, CONS_KEY) - get<number>(this._startQuarterValues, CONS_KEY)
     const consumptionInQuarter = round(1000 * consDiff, 0) ?? -1
-    console.log(`productionInQuarter`, productionInQuarter, `consumptionInQuarter`, consumptionInQuarter)
+    // console.log(`productionInQuarter`, productionInQuarter, `consumptionInQuarter`, consumptionInQuarter)
 
     return {
       time,

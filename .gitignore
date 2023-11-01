@@ -5,7 +5,6 @@
 .env.*
 db/sqlite.db
 
-
 # Logs
 logs
 *.log
@@ -37,3 +36,4 @@ lerna-debug.log*
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+data/Verbruikshistoriek_elektriciteit_541448860004107822_20210525_20231030_kwartiertotalen.csv
