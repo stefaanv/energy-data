@@ -1,5 +1,4 @@
-import { Controller, Get, Inject, Param } from '@nestjs/common'
-import { EntityManager } from '@mikro-orm/core'
+import { Controller, Get } from '@nestjs/common'
 import { PricingService } from './pricing.service'
 import { subHours } from 'date-fns'
 

@@ -13,9 +13,8 @@ const START_PORT = 3000
 async function bootstrap() {
   // set up the application and logging
   const logger = new LoggerService('main')
-  const app = await NestFactory.create(AppModule)
+  const app = await NestFactory.create(AppModule, { cors: true })
   app.setGlobalPrefix('api')
-  app.enableCors()
 
   // // Activate the command console (if needed)
   // const activateKeyWatcher = config.get('activateCommandKeyWatcher', false)

@@ -1,4 +1,4 @@
-import * as Joi from 'Joi'
+import * as Joi from 'joi'
 
 export const HA_CKEY = 'homeAssistant'
 export const HA_SERVICE_CKEY = 'servicesUrl'
