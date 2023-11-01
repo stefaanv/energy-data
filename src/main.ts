@@ -13,7 +13,7 @@ const START_PORT = 3000
 async function bootstrap() {
   // set up the application and logging
   const logger = new LoggerService('main')
-  const app = await NestFactory.create(AppModule, { logger })
+  const app = await NestFactory.create(AppModule)
   app.setGlobalPrefix('api')
   app.enableCors()
 
@@ -25,6 +25,8 @@ async function bootstrap() {
   const port = await getPort({ portRange: [3000, 3010] })
   app.listen(port)
   logger.log(`Listening on port ${port}`)
+  logger.verbose('VERBOSE LOG EXAMPLE')
+  logger.debug('DEBUG LOG EXAMPLE')
 
   // // de/re-activate the keywatcher if config is altered
   // config.on('reloaded', () => {

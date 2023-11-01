@@ -19,7 +19,6 @@ import { MonitorController } from './energy-actions/monitor.controller'
 // Db tables updaten: https://mikro-orm.io/docs/schema-generator
 // npm run build && npx mikro-orm schema:update --run
 const clientPath = resolve(__dirname, '..', 'client')
-console.log('clientPath', clientPath)
 @Module({
   imports: [
     ConfigModule.register({

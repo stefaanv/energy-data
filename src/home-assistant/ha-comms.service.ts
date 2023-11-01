@@ -108,14 +108,13 @@ export class HaCommService {
         },
       }
       if (!this._lastValid) {
-        this._log.log(`set this._lastValid to ${JSON.stringify(data)}`)
+        this._log.verbose(`setting lastValid energy data`, data)
         this._lastValid = data
       }
 
       return data
     } catch (error) {
-      this._log.error(`unable to get HA energy data: ${error.message}`)
-      console.error('url:', url)
+      this._log.error(`unable to get HA energy data: ${error.message}`, error, `url: ${url}`)
       return undefined
     }
   }
