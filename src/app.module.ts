@@ -39,6 +39,7 @@ const clientPath = resolve(__dirname, '..', 'client')
     }),
     ServeStaticModule.forRoot({
       rootPath: clientPath,
+      exclude: ['/api/(.*)'],
     }),
   ],
   controllers: [AppController, EnergyController, PricingController, MonitorController],

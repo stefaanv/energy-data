@@ -12,7 +12,7 @@ import { get, tryit } from 'radash'
 import { EntityManager } from '@mikro-orm/sqlite'
 import { QuarterlyEntity } from '@src/entities/quarterly'
 import { round } from '@src/helpers/number.helper'
-import { EnergyData } from '@src/home-assistant/energy-data.model'
+import { ConsProd, EnergyData } from '@src/home-assistant/energy-data.model'
 
 const PROD_KEY = 'energy.production'
 const CONS_KEY = 'energy.consumption'
@@ -24,11 +24,8 @@ export interface BatteryOperationStatus {
   duration: number
 }
 
-export interface LocalEnergyData {
-  time: Date
-  allData?: EnergyData
-  productionInQuarter: number
-  consumptionInQuarter: number
+export interface LocalEnergyData extends EnergyData {
+  inQuarter: ConsProd
 }
 
 const START_STATUS = {
@@ -51,6 +48,7 @@ export class MonitorService {
   private _monthlyPeakConsumption: number
   private _lastEnergyData: LocalEnergyData
   private _minMonthlyPeakConsumption: number
+  private _hourlyTotals: ConsProd
 
   constructor(
     config: ConfigService,
@@ -62,6 +60,7 @@ export class MonitorService {
     this._currentStatus = START_STATUS
     this._minMonthlyPeakConsumption = config.get<number>('minMonthlyPeakWh')
     this._monthlyPeakConsumption = 0
+    this._hourlyTotals = { consumption: 0, production: 0 }
   }
 
   @Cron('*/20 * * * * *')
@@ -71,14 +70,16 @@ export class MonitorService {
       this._log.error(`undefined returned by MonitorService.getCurrentEnergyData()`)
       return
     }
-    this._lastEnergyData = current
     const now = current.time
     if (now.getMinutes() % 15 === 0 && (now.getSeconds() < 2 || now.getSeconds() > 58)) {
-      this.everyQuarter(current)
+      this.everyQuarter(current, now.getMinutes() === 0)
     }
+
+    this._lastEnergyData = current
 
     const allTasks = await this._energyService.allTasks()
     const actualTasks = allTasks.filter(t => isBetween(now, t.from, t.till))
+
     if (actualTasks.length === 0) {
       if (this._currentStatus.workingMode !== 'optimize') {
         await this._haCommService.stopForciblyCharge()
@@ -99,6 +100,13 @@ export class MonitorService {
         ) {
           await this._haCommService.startForcibly(power, duration)
           this.setStatus(task.setting.mode, power, duration)
+          const timeF = format(new Date(), 'HH:mm', TZ_OPTIONS)
+          const fromF = format(t.from, 'd/MM HH:mm', TZ_OPTIONS)
+          const tillF = format(t.from, 'HH:mm', TZ_OPTIONS)
+          const msg =
+            `${timeF} - Started forcibly charge ${this._currentStatus.workingMode} @ ${power} for ${duration} min` +
+            `for task ${fromF} - ${tillF} ${t.mode}`
+          this._log.log(msg)
         }
       }
     }
@@ -118,52 +126,80 @@ export class MonitorService {
     return this._lastEnergyData
   }
 
-  async everyQuarter(current: LocalEnergyData) {
+  async everyQuarter(current: LocalEnergyData, onTheHour: boolean) {
+    //TODO verbuiken maar om het uur rapporteren
     const now = new Date()
-    const peak = (current.allData.energy.monthlyPeak = this._monthlyPeakConsumption)
-    const consumption = current.consumptionInQuarter
-    const production = current.productionInQuarter
 
     if (this._startQuarterValues) {
-      const timeF = format(now, 'HH:mm')
-      this._log.log(`quarter info at ${timeF} : cons ${consumption}Wh, inj ${production}Wh`)
+      this._hourlyTotals.consumption += current.inQuarter.consumption
+      this._hourlyTotals.production += current.inQuarter.production
+      if (onTheHour) {
+        this.report(now, this._hourlyTotals)
+        this._hourlyTotals = { consumption: 0, production: 0 }
+      }
+
+      // Check for peak increase
+      current.energy.monthlyPeak = this._monthlyPeakConsumption
+      const consumption = current.inQuarter.consumption
       if (consumption > this._monthlyPeakConsumption) {
         this._monthlyPeakConsumption = consumption
         this._log.warn(`monthly peak increased to ${consumption}`)
       }
-      const em = this._em.fork()
-      const [error] = await tryit(() =>
-        em.insert(QuarterlyEntity, {
-          batterySoc: round(current.allData.battery.soc) ?? -1,
-          gridConsumed: round(consumption) ?? -1,
-          gridProduced: round(production) ?? -1,
-          monthlyPeak: round(this._monthlyPeakConsumption) ?? -1,
-          startTime: now,
-          hrTime: format(now, HR_DB_TIME_FORMAT, TZ_OPTIONS),
-        }),
-      )()
-      if (error) this._log.error(`unable to save quarterly energy values: ${error.message}`)
+
+      await this.persist(current, now)
     } else {
       this._log.log(`getting initial quarter data`)
     }
-    this._startQuarterValues = current.allData
+    this._startQuarterValues = current
+  }
+
+  private async persist(current: LocalEnergyData, now: Date) {
+    const em = this._em.fork()
+    const [error] = await tryit(() =>
+      em.insert(QuarterlyEntity, {
+        batterySoc: round(current.battery.soc) ?? -1,
+        gridConsumed: round(current.inQuarter.consumption) ?? -1,
+        gridProduced: round(current.inQuarter.production) ?? -1,
+        monthlyPeak: round(this._monthlyPeakConsumption) ?? -1,
+        startTime: now,
+        hrTime: format(now, HR_DB_TIME_FORMAT, TZ_OPTIONS),
+      }),
+    )()
+    if (error) {
+      this._log.error(`Error @ monitoring.service ln 159: ` + error.message)
+      console.error(error)
+      console.log('current=', current)
+    }
+  }
+
+  private report(now: Date, totals: ConsProd) {
+    const timeF = format(now, 'HH:mm')
+    const qMsg =
+      `Consumption at ${timeF} +${totals.consumption} ` +
+      `-${totals.production} Wh ${this._currentStatus.workingMode}` +
+      (this._currentStatus.workingMode === 'optimize'
+        ? ''
+        : ` @ ${this._currentStatus.setPower} W for ${this._currentStatus.duration} min`)
+    this._log.log(qMsg)
   }
 
   async getCurrentEnergyData(): Promise<LocalEnergyData | undefined> {
     const time = new Date()
     const allData = await this._haCommService.getEnergyData()
-    if (!allData) return undefined
+    if (!allData) {
+      return undefined
+    }
     const prodDiff = get<number>(allData, PROD_KEY) - get<number>(this._startQuarterValues, PROD_KEY)
-    const productionInQuarter = round(1000 * prodDiff, 0) ?? -1
     const consDiff = get<number>(allData, CONS_KEY) - get<number>(this._startQuarterValues, CONS_KEY)
-    const consumptionInQuarter = round(1000 * consDiff, 0) ?? -1
+    const inQuarter = {
+      production: round(1000 * prodDiff, 0) ?? -1,
+      consumption: round(1000 * consDiff, 0) ?? -1,
+    }
     // console.log(`productionInQuarter`, productionInQuarter, `consumptionInQuarter`, consumptionInQuarter)
 
     return {
-      time,
-      allData,
-      productionInQuarter,
-      consumptionInQuarter,
+      ...allData,
+      inQuarter,
     }
   }
 

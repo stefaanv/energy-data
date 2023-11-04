@@ -6,7 +6,7 @@ exports.default = () => ({
   batteryMonitorInterval: 10,
   minMonthlyPeakWh: 625,
   timeZone: 'Europe/Brussels',
-  haDryRun: false,
+  haDryRun: true,
   batteryConfig: {
     capacity: 10,
     maxChargePower: 5000,

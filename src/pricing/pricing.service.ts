@@ -14,6 +14,8 @@ import { HR_DB_TIME_FORMAT, TZ_OPTIONS } from '../helpers/time.helpers'
 import { round } from '../helpers/number.helper'
 import { PricePoint } from '@src/shared-models/price-point.interface'
 
+//TODO Spot prijzen zelf implementeren, ref https://github.com/hexagon/spotweb
+
 type GetParams = Record<string, string | number>
 const SPOT_BELPEX_NAME = 'Spot Belpex'
 
@@ -47,23 +49,25 @@ export class PricingService {
   }
 
   @Cron('0 10 14-23/2 * * *')
-  async loadIndexData() {
+  async loadIndexData(): Promise<[Error, undefined] | [undefined, string]> {
+    const logError = (error: Error, type: 'get' | 'persist', uid: string) => {
+      const msg =
+        type === 'get'
+          ? `unable to get Belpex values from ${this._url}: ${error.message}`
+          : `unable to persist index values: ${error.message}`
+      this._log.error(msg, uid, error1)
+      return [error, undefined] as [Error, undefined]
+    }
     this._log.log(`retreiving Spot belpex index, id = ${this._spotBelpex.id}`)
     const uri = axios.getUri({ url: this._url, params: this._urlParams })
     const [error1, aResult] = await tryit(axios.get<SpotResult>)(uri)
-    if (error1) {
-      this._log.error(`unable to get Belpex values: ${error1.message}`)
-      return
-    }
+    if (error1) return logError(error1, 'get', '0f3e9')
     const spotPrices = new TransformSpotResults(aResult.data, this._timeZone)
     const em = this._em.fork()
     const [error2, lastRec] = await tryit(() =>
       em.findOne(IndexValue, { index: this._spotBelpex }, { orderBy: { startTime: 'DESC' } }),
     )()
-    if (error2) {
-      this._log.error(`unable to retreive index values`)
-      return
-    }
+    if (error2) return logError(error2, 'get', '75bb7')
 
     const lastKnowValueTime = lastRec ? lastRec.startTime : new Date(1970, 1)
     const newPrices = spotPrices.data.filter(dp => isBefore(lastKnowValueTime, dp.startTime))
@@ -79,16 +83,13 @@ export class PricingService {
         })
       }
       const [error3] = await tryit(() => em.flush())()
-      if (error3) {
-        this._log.error(`unable to store index values`)
-        console.error(error3)
-        return
-      }
+      if (error3) return logError(error3, 'persist', '4ce1a')
 
       const dFrom = format(first(spotPrices.data).startTime, 'dd/MM/yy HH:mm', TZ_OPTIONS)
       const dTill = format(last(spotPrices.data).startTime, 'dd/MM/yy HH:mm', TZ_OPTIONS)
       const msg = `Loaded Sport Epex data from ${dFrom} - ${dTill}, save ${newPrices.length} to DB`
       this._log.log(msg)
+      return [undefined, msg]
     }
   }
 

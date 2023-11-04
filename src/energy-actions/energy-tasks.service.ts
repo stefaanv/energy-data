@@ -21,14 +21,15 @@ export class EnergyTasksService {
     this._taskListRepo = this._em.getRepository(ChargeTaskEntity)
     ChargeTask.config = config.get<BatteryConfig>('batteryConfig')
     this._taskListProxy = config.createProxy<Array<IChargeTask>>('taskList')
-    this.loadTaskListFromConfig()
-    config.on('reloaded', () => this.loadTaskListFromConfig())
+    this.loadTaskListFromDbAndConfig()
+    config.on('reloaded', () => this.loadTaskListFromDbAndConfig())
   }
 
-  async loadTaskListFromConfig() {
+  async loadTaskListFromDbAndConfig() {
     const em = this._em.fork()
     const taskListRepo = em.getRepository(ChargeTaskEntity)
-    const taskList = await taskListRepo.find({})
+    const from = subHours(new Date(), 12)
+    const taskList = await taskListRepo.find({ till: { $gt: from } })
     for (const ctl of this._taskListProxy()) {
       const inTaskList = taskList.find(t => Math.abs(differenceInSeconds(t.from, ctl.from)) <= 5)
       if (inTaskList) {

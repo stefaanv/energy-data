@@ -83,7 +83,7 @@ export class HaCommService {
         this._allSensorIds.includes(s.entity_id),
       )
 
-      //TODO! er niet alle waarden komen altijf door vanuit HA
+      // niet alle waarden komen altijd door vanuit HA, bvb
       // {"time":"2023-10-30T11:48:00.011Z","power":{"production":0,"consumption":1.389},"energy":{"production":4725.201,"consumption":3885.562},"battery":{"soc":null,"chargePower":null},"inverter":{"inputPower":null},"grid":{"power":null}}
       // Laatste geldige waarden bijhouden en meegeven indien geen geldige gekregen
       const data = {
@@ -108,7 +108,6 @@ export class HaCommService {
         },
       }
       if (!this._lastValid) {
-        this._log.verbose(`setting lastValid energy data`, data)
         this._lastValid = data
       }
 
