@@ -32,6 +32,7 @@
     "@nestjs/schedule": "^3.0.4",
     "@nestjs/serve-static": "^4.0.0",
     "axios": "^1.5.1",
+    "csv-parse": "^5.5.2",
     "date-fns": "^2.30.0",
     "date-fns-tz": "^2.0.0",
     "get-port-please": "^3.1.1",

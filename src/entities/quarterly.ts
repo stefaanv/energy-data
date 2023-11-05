@@ -35,4 +35,8 @@ export class QuarterlyEntity {
   @Property({ columnType: 'real' })
   /** in Wh*/
   batterySoc: number
+
+  @Property({ columnType: 'real', nullable: false, default: 0.0 })
+  /** in Wh*/
+  monthlyPeak: number
 }

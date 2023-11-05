@@ -1,0 +1,5 @@
+﻿Van Datum;Van Tijdstip;Tot Datum;Tot Tijdstip;EAN;Meter;Metertype;Register;Volume;Eenheid;Validatiestatus
+25-05-2021;00:00:00;25-05-2021;00:15:00;="541448860004107822";1SAG1100302657;Digitale Meter;Afname Nacht;0,082;kWh;Gevalideerd
+25-05-2021;00:00:00;25-05-2021;00:15:00;="541448860004107822";1SAG1100302657;Digitale Meter;Injectie Nacht;0,083;kWh;Gevalideerd
+25-05-2021;00:15:00;25-05-2021;00:30:00;="541448860004107822";1SAG1100302657;Digitale Meter;Afname Nacht;0,073;kWh;Gevalideerd
+25-05-2021;00:15:00;25-05-2021;00:30:00;="541448860004107822";1SAG1100302657;Digitale Meter;Injectie Nacht;0,174;kWh;Gevalideerd

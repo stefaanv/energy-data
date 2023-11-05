@@ -160,7 +160,7 @@ export class MonitorService {
         batterySoc: round(current.battery.soc) ?? -1,
         gridConsumed: round(current.inQuarter.consumption) ?? -1,
         gridProduced: round(current.inQuarter.production) ?? -1,
-        // monthlyPeak: round(this._monthlyPeakConsumption) ?? -1,
+        monthlyPeak: round(this._monthlyPeakConsumption) ?? -1,
         startTime: now,
         hrTime: format(now, HR_DB_TIME_FORMAT, TZ_OPTIONS),
       }),
