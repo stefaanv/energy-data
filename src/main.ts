@@ -6,6 +6,7 @@ import { commandRootQuestions } from './inquirer-questions/command-root'
 import { emitKeypressEvents } from 'readline'
 import { LoggerService } from './logger.service'
 import { getPort } from 'get-port-please'
+import { MikroORM } from '@mikro-orm/sqlite'
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 const START_PORT = 3000
@@ -17,6 +18,14 @@ async function bootstrap() {
   app.setGlobalPrefix('api')
   app.enableCors({ origin: '*' })
 
+  // Run DB migrations
+  await MikroORM.init({
+    migrations: {
+      path: 'dist/migrations',
+      pathTs: 'src/migrations',
+    },
+  })
+
   // // Activate the command console (if needed)
   // const activateKeyWatcher = config.get('activateCommandKeyWatcher', false)
   // if (activateKeyWatcher) setKeyWatcher()
@@ -25,8 +34,6 @@ async function bootstrap() {
   const port = await getPort({ portRange: [3000, 3010] })
   app.listen(port)
   logger.log(`Listening on port ${port}`)
-  logger.verbose('VERBOSE LOG EXAMPLE')
-  logger.debug('DEBUG LOG EXAMPLE')
 
   // // de/re-activate the keywatcher if config is altered
   // config.on('reloaded', () => {

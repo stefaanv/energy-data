@@ -2,7 +2,7 @@ import { Controller, Get, HttpException, HttpStatus, Query } from '@nestjs/commo
 import { QueryService } from './query.service'
 import { parse } from 'date-fns'
 
-@Controller('query')
+@Controller('db')
 export class QueryController {
   constructor(private readonly _queryService: QueryService) {}
 
