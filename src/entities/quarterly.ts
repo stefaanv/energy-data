@@ -8,17 +8,29 @@ export class QuarterlyEntity {
   @Property({ columnType: 'varchar' })
   hrTime!: string
 
-  @Property({ columnType: 'real' })
+  @Property({ columnType: 'real', nullable: true, default: null })
   /** in Wh*/
   gridConsumed: number
 
-  @Property({ columnType: 'real' })
+  @Property({ columnType: 'real', nullable: true, default: null })
   /** in Wh*/
   gridProduced: number
 
-  @Property({ columnType: 'real' })
+  @Property({ columnType: 'real', nullable: true, default: null })
   /** in Wh*/
-  monthlyPeak: number
+  houseConsumed: number
+
+  @Property({ columnType: 'real', nullable: true, default: null })
+  /** in Wh*/
+  solarProduced: number
+
+  @Property({ columnType: 'real', nullable: true, default: null })
+  /** in Wh*/
+  batteryCharged: number
+
+  @Property({ columnType: 'real', nullable: true, default: null })
+  /** in Wh*/
+  batteryDischarged: number
 
   @Property({ columnType: 'real' })
   /** in Wh*/

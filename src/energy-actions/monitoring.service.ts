@@ -84,6 +84,7 @@ export class MonitorService {
       if (this._currentStatus.workingMode !== 'optimize') {
         await this._haCommService.stopForciblyCharge()
         this.setStatus('optimize', 0, 0)
+        this._log.warn(`Stop forcibly charge`)
       }
       return // no tasks to execute
     }
@@ -100,13 +101,12 @@ export class MonitorService {
         ) {
           await this._haCommService.startForcibly(power, duration)
           this.setStatus(task.setting.mode, power, duration)
-          const timeF = format(new Date(), 'HH:mm', TZ_OPTIONS)
           const fromF = format(t.from, 'd/MM HH:mm', TZ_OPTIONS)
           const tillF = format(t.from, 'HH:mm', TZ_OPTIONS)
           const msg =
-            `${timeF} - Started forcibly charge ${this._currentStatus.workingMode} @ ${power} for ${duration} min` +
+            `Start forcibly charge ${this._currentStatus.workingMode} @ ${power} for ${duration} min` +
             `for task ${fromF} - ${tillF} ${t.mode}`
-          this._log.log(msg)
+          this._log.warn(msg)
         }
       }
     }
@@ -160,7 +160,7 @@ export class MonitorService {
         batterySoc: round(current.battery.soc) ?? -1,
         gridConsumed: round(current.inQuarter.consumption) ?? -1,
         gridProduced: round(current.inQuarter.production) ?? -1,
-        monthlyPeak: round(this._monthlyPeakConsumption) ?? -1,
+        // monthlyPeak: round(this._monthlyPeakConsumption) ?? -1,
         startTime: now,
         hrTime: format(now, HR_DB_TIME_FORMAT, TZ_OPTIONS),
       }),
@@ -173,9 +173,8 @@ export class MonitorService {
   }
 
   private report(now: Date, totals: ConsProd) {
-    const timeF = format(now, 'HH:mm')
     const qMsg =
-      `${timeF} cons +${totals.consumption}-${totals.production}Wh ` +
+      `cons +${totals.consumption}-${totals.production}Wh ` +
       ` ${this._currentStatus.workingMode} bat ${this.currentEnergyData.battery}% ` +
       (this._currentStatus.workingMode === 'optimize'
         ? ''

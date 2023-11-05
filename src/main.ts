@@ -7,6 +7,7 @@ import { emitKeypressEvents } from 'readline'
 import { LoggerService } from './logger.service'
 import { getPort } from 'get-port-please'
 import { MikroORM } from '@mikro-orm/sqlite'
+import ormConfig from '@src/mikro-orm.config'
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 const START_PORT = 3000
@@ -19,12 +20,20 @@ async function bootstrap() {
   app.enableCors({ origin: '*' })
 
   // Run DB migrations
-  await MikroORM.init({
+  console.log(ormConfig)
+  const orm = await MikroORM.init({
+    entities: ormConfig.entities,
+    entitiesTs: ormConfig.entitiesTs,
+    dbName: ormConfig.dbName,
+    type: 'sqlite',
+
     migrations: {
       path: 'dist/migrations',
       pathTs: 'src/migrations',
     },
   })
+  const migrator = orm.getMigrator()
+  await migrator.up()
 
   // // Activate the command console (if needed)
   // const activateKeyWatcher = config.get('activateCommandKeyWatcher', false)
