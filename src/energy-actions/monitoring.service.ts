@@ -65,6 +65,7 @@ export class MonitorService {
 
   @Cron('*/20 * * * * *')
   async monitor() {
+    //TODO: guard against 1|energy-data  | [Nest] 11678  - 05/11/2023, 18:57:41   ERROR [Scheduler] LockWaitTimeoutException: select `c0`.* from `charge-tasks` as `c0` where `c0`.`from` > 1699163860062 order by `c0`.`from` asc - SQLITE_BUSY: database is locked
     const current = await this.getCurrentEnergyData()
     if (!current) {
       this._log.error(`undefined returned by MonitorService.getCurrentEnergyData()`)
