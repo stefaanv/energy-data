@@ -22,11 +22,8 @@ async function bootstrap() {
   // Run DB migrations
   console.log(ormConfig)
   const orm = await MikroORM.init({
-    entities: ormConfig.entities,
-    entitiesTs: ormConfig.entitiesTs,
-    dbName: ormConfig.dbName,
+    ...ormConfig,
     type: 'sqlite',
-
     migrations: {
       path: 'dist/migrations',
       pathTs: 'src/migrations',

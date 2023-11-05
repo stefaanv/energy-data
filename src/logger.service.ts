@@ -30,7 +30,9 @@ export class LoggerService extends ConsoleLogger {
   }
 
   warn(message: any, ...optionalParams: any[]) {
-    super.warn(message, ...optionalParams)
+    super.log(message, ...optionalParams)
+    const uuid = isString(optionalParams[0]) ? optionalParams.shift() : undefined
+    this.print(process.env.LOG_FILE_PATH, 'log', uuid, 'WARN ' + message, optionalParams)
   }
 
   debug(message: any, ...optionalParams: any[]) {
