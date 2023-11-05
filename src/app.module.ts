@@ -15,6 +15,8 @@ import { EnergyTasksService } from './energy-actions/energy-tasks.service'
 import { MonitorService } from './energy-actions/monitoring.service'
 import { PricingController } from './pricing/pricing.controller'
 import { MonitorController } from './energy-actions/monitor.controller'
+import { QueryController } from './query-db/query.controller'
+import { QueryService } from './query-db/query.service'
 
 // Db tables updaten: https://mikro-orm.io/docs/schema-generator
 // npm run build && npx mikro-orm schema:update --run
@@ -42,8 +44,16 @@ const clientPath = resolve(__dirname, '..', 'client')
       exclude: ['/api/(.*)'],
     }),
   ],
-  controllers: [AppController, EnergyController, PricingController, MonitorController],
-  providers: [AppService, LoggerService, HaCommService, MonitorService, PricingService, EnergyTasksService],
+  controllers: [AppController, EnergyController, PricingController, MonitorController, QueryController],
+  providers: [
+    AppService,
+    LoggerService,
+    HaCommService,
+    MonitorService,
+    PricingService,
+    EnergyTasksService,
+    QueryService,
+  ],
   exports: [LoggerService, ConfigModule],
 })
 export class AppModule {}
