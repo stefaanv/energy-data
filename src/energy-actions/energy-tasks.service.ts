@@ -1,7 +1,7 @@
 import { ConfigService } from '@itanium.be/nestjs-dynamic-config'
 import { Injectable } from '@nestjs/common'
 import { BatteryConfig, ChargeTask } from './charge-task.class'
-import { assign, sort } from 'radash'
+import { assign, sort, tryit } from 'radash'
 import { IChargeTask, chargeTaskSettingToString } from '../shared-models/charge-task.interface'
 import { differenceInSeconds, subHours } from 'date-fns'
 import { LoggerService } from '@src/logger.service'
@@ -58,7 +58,14 @@ export class EnergyTasksService {
   async allTasks(since: Date = subHours(new Date(), 12)) {
     const em = this._em.fork()
     const taskListRepo = em.getRepository(ChargeTaskEntity)
-    const allTasks = await taskListRepo.find({ from: { $gt: since } }, { orderBy: { from: 'asc' } })
+    const [error, allTasks] = await tryit(taskListRepo.find)(
+      { from: { $gt: since } },
+      { orderBy: { from: 'asc' } },
+    )
+    if (error) {
+      this._log.error(error.message, 'a391e', error)
+      return []
+    }
     return allTasks
   }
 
