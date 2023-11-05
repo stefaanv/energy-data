@@ -175,8 +175,8 @@ export class MonitorService {
   private report(now: Date, totals: ConsProd) {
     const timeF = format(now, 'HH:mm')
     const qMsg =
-      `Consumption at ${timeF} +${totals.consumption} ` +
-      `-${totals.production} Wh ${this._currentStatus.workingMode}` +
+      `${timeF} cons +${totals.consumption}-${totals.production}Wh ` +
+      ` ${this._currentStatus.workingMode} bat ${this.currentEnergyData.battery}% ` +
       (this._currentStatus.workingMode === 'optimize'
         ? ''
         : ` @ ${this._currentStatus.setPower} W for ${this._currentStatus.duration} min`)
