@@ -135,7 +135,7 @@ export class MonitorService {
       this._hourlyTotals.consumption += current.inQuarter.consumption
       this._hourlyTotals.production += current.inQuarter.production
       if (onTheHour) {
-        this.report(now, this._hourlyTotals)
+        this.report(this._hourlyTotals)
         this._hourlyTotals = { consumption: 0, production: 0 }
       }
 
@@ -173,14 +173,16 @@ export class MonitorService {
     }
   }
 
-  private report(now: Date, totals: ConsProd) {
-    const qMsg =
-      `cons +${totals.consumption}-${totals.production}Wh ` +
-      ` ${this._currentStatus.workingMode} bat ${this.currentEnergyData.battery}% ` +
-      (this._currentStatus.workingMode === 'optimize'
-        ? ''
-        : ` @ ${this._currentStatus.setPower} W for ${this._currentStatus.duration} min`)
-    this._log.log(qMsg)
+  private report(totals: ConsProd) {
+    const statusMsg: Record<BatteryOperationMode, string> = {
+      charge: `charging at ${this._currentStatus.setPower} W for ${this._currentStatus.duration} min`,
+      discharge: `discharging at ${this._currentStatus.setPower} W for ${this._currentStatus.duration} min`,
+      optimize: `optimizing`,
+      disabled: `battery disabled`,
+    }
+    this._log.log(
+      `cons +${totals.consumption}-${totals.production}Wh ${statusMsg} bat ${this.currentEnergyData.battery.soc}%`,
+    )
   }
 
   async getCurrentEnergyData(): Promise<LocalEnergyData | undefined> {
