@@ -58,10 +58,9 @@ export class EnergyTasksService {
   async allTasks(since: Date = subHours(new Date(), 12)) {
     const em = this._em.fork()
     const taskListRepo = em.getRepository(ChargeTaskEntity)
-    const [error, allTasks] = await tryit(taskListRepo.find)(
-      { from: { $gt: since } },
-      { orderBy: { from: 'asc' } },
-    )
+    const [error, allTasks] = await tryit(() =>
+      taskListRepo.find({ from: { $gt: since } }, { orderBy: { from: 'asc' } }),
+    )()
     if (error) {
       this._log.error(error.message, 'a391e', error)
       return []

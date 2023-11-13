@@ -52,6 +52,13 @@ exports.default = () => ({
           device_id: 'd36a4ede8885b40373c9b4d100e7f139',
         },
       },
+      setWorkingMode: {
+        //TODO!
+        url: 'services/huawei_solar/stop_forcible_charge',
+        postData: {
+          device_id: 'd36a4ede8885b40373c9b4d100e7f139',
+        },
+      },
     },
     sensors: {
       smartMeter: {
